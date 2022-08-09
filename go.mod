@@ -1,4 +1,4 @@
-module clever_notes_2
+module github.com/golovpeter/clever_notes_2
 
 go 1.18
 
