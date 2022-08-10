@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"github.com/golovpeter/clever_notes_2/internal/handlers/signin"
 	"github.com/golovpeter/clever_notes_2/internal/handlers/signup"
 	"github.com/golovpeter/clever_notes_2/internal/storage"
+	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/jmoiron/sqlx"
 	"log"
 	"net/http"
@@ -20,6 +22,7 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.Handle("/signup", signup.NewSignUpHandler(db))
+	mux.Handle("/signin", signin.NewSignInHandler(db))
 
 	log.Fatal(http.ListenAndServe(":8080", mux))
 

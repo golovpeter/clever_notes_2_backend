@@ -1,11 +1,9 @@
 package signup
 
 import (
-	"crypto/md5"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	_ "github.com/jackc/pgx/v4/stdlib"
+	"github.com/golovpeter/clever_notes_2/internal/common/hasher"
 	"github.com/jmoiron/sqlx"
 	"log"
 	"net/http"
@@ -17,11 +15,6 @@ type signUpHandler struct {
 
 func NewSignUpHandler(db *sqlx.DB) *signUpHandler {
 	return &signUpHandler{Db: db}
-}
-
-func generatePasswordHash(password string) string {
-	hash := md5.Sum([]byte(password))
-	return hex.EncodeToString(hash[:])
 }
 
 func (s *signUpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -43,12 +36,6 @@ func (s *signUpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err != nil {
-		_, _ = fmt.Fprint(w, "The connection to the database is not established")
-		log.Fatalln(err)
-		return
-	}
-
 	var elementExist bool
 	err = s.Db.Get(&elementExist, "select exists(select username from users where username = $1)", in.Username)
 
@@ -62,7 +49,7 @@ func (s *signUpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		tx := s.Db.MustBegin()
 
 		tx.MustExec("insert into users (username, password) values ($1, $2)",
-			in.Username, generatePasswordHash(in.Password))
+			in.Username, hasher.GeneratePasswordHash(in.Password))
 
 		err = tx.Commit()
 
