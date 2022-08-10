@@ -1,6 +1,8 @@
 package signup
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	_ "github.com/jackc/pgx/v4/stdlib"
@@ -15,6 +17,11 @@ type signUpHandler struct {
 
 func NewSignUpHandler(db *sqlx.DB) *signUpHandler {
 	return &signUpHandler{Db: db}
+}
+
+func generatePasswordHash(password string) string {
+	hash := md5.Sum([]byte(password))
+	return hex.EncodeToString(hash[:])
 }
 
 func (s *signUpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -55,7 +62,7 @@ func (s *signUpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		tx := s.Db.MustBegin()
 
 		tx.MustExec("insert into users (username, password) values ($1, $2)",
-			in.Username, in.Password)
+			in.Username, generatePasswordHash(in.Password))
 
 		err = tx.Commit()
 
