@@ -9,11 +9,15 @@ import (
 	"net/http"
 )
 
-type DbData struct {
+type signUpHandler struct {
 	Db *sqlx.DB
 }
 
-func (d *DbData) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func NewSignUpHandler(db *sqlx.DB) *signUpHandler {
+	return &signUpHandler{Db: db}
+}
+
+func (s *signUpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		_, _ = fmt.Fprint(w, "Unsupported method")
@@ -38,38 +42,33 @@ func (d *DbData) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	defer d.Db.Close()
-
 	var elementExist bool
-	err = d.Db.Get(&elementExist, "select exists(select email from users where email = $1)", in.Email)
+	err = s.Db.Get(&elementExist, "select exists(select username from users where username = $1)", in.Username)
 
 	if err != nil {
 		log.Fatalln(err)
 		return
 	}
 
-	if in.Password == in.ConformPass {
-		if !elementExist {
+	if !elementExist {
 
-			tx := d.Db.MustBegin()
+		tx := s.Db.MustBegin()
 
-			tx.MustExec("insert into users (email, password, conform_pass) values ($1, $2, $3)",
-				in.Email, in.Password, in.ConformPass)
+		tx.MustExec("insert into users (username, password) values ($1, $2)",
+			in.Username, in.Password)
 
-			err = tx.Commit()
+		err = tx.Commit()
 
-			if err != nil {
-				log.Fatalln(err)
-				return
-			}
-
-			_, _ = fmt.Fprintf(w, "User succesful register")
-
-		} else {
-			_, _ = fmt.Fprint(w, "Element already registered")
+		if err != nil {
+			log.Fatalln(err)
+			return
 		}
-	} else {
-		_, _ = fmt.Fprint(w, "Passwords don't match")
-	}
 
+		_, _ = fmt.Fprintf(w, "User succesful register")
+		return
+
+	} else {
+		_, _ = fmt.Fprint(w, "Element already registered")
+		return
+	}
 }

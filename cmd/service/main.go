@@ -12,14 +12,16 @@ import (
 func main() {
 	url := fmt.Sprintf("postgres://%s:%d@%s:%d/%s", storage.User, storage.Password,
 		storage.Host, storage.Port, storage.Dbname)
-	db, err := sqlx.Connect("pgx", url)
 
+	db, err := sqlx.Connect("pgx", url)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
 	mux := http.NewServeMux()
-	mux.Handle("/signup", &signup.DbData{Db: db})
+	mux.Handle("/signup", signup.NewSignUpHandler(db))
 
 	log.Fatal(http.ListenAndServe(":8080", mux))
+
+	defer db.Close()
 }
