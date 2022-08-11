@@ -50,14 +50,21 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		err = s.Db.Get(&userData, "select user_id, username, password from users where  username = $1", in.Username)
 
 		if in.Username == userData.Username && hasher.GeneratePasswordHash(in.Password) == userData.Password {
-			token, err := token_generator.GenerateJWT(in.Username)
+			accessToken, err := token_generator.GenerateJWT(in.Username)
 
 			if err != nil {
 				log.Fatalln(err)
 				return
 			}
 
-			out, err := json.Marshal(map[string]string{"token": token})
+			refreshToken, err := token_generator.GenerateRefreshJWT()
+
+			if err != nil {
+				log.Fatalln(err)
+				return
+			}
+
+			out, err := json.Marshal(map[string]string{"access_token": accessToken, "refresh_token": refreshToken})
 
 			if err != nil {
 				log.Fatalln(err)
@@ -66,7 +73,10 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 			tx := s.Db.MustBegin()
 
-			tx.MustExec("insert into tokens values ((select user_id from users where users.user_id = $1), $2)", userData.User_id, token)
+			tx.MustExec("insert into tokens values ((select user_id from users where users.user_id = $1), $2, $3)",
+				userData.User_id,
+				accessToken,
+				refreshToken)
 
 			tx.Commit()
 
