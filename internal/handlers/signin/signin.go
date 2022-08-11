@@ -50,6 +50,19 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		err = s.Db.Get(&userData, "select user_id, username, password from users where  username = $1", in.Username)
 
 		if in.Username == userData.Username && hasher.GeneratePasswordHash(in.Password) == userData.Password {
+
+			var tokensExist bool
+			err = s.Db.Get(&tokensExist, "select exists(select user_id from tokens where user_id = $1)", userData.User_id)
+
+			if err != nil {
+				log.Fatalln(err)
+				return
+			}
+
+			if tokensExist {
+				s.Db.Query("delete from tokens where user_id = $1", userData.User_id)
+			}
+
 			accessToken, err := token_generator.GenerateJWT(in.Username)
 
 			if err != nil {

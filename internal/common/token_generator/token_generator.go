@@ -27,7 +27,7 @@ func GenerateJWT(username string) (string, error) {
 
 func GenerateRefreshJWT() (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
-		ExpiresAt: &jwt.NumericDate{Time: time.Now().Add(time.Hour * 48)},
+		ExpiresAt: &jwt.NumericDate{Time: time.Now().Add(time.Hour * 720)},
 	})
 
 	return token.SignedString([]byte(os.Getenv("SIGNINKEY")))
