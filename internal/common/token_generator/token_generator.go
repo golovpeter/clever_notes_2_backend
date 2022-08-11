@@ -2,6 +2,7 @@ package token_generator
 
 import (
 	"github.com/golang-jwt/jwt/v4"
+	"os"
 	"time"
 )
 
@@ -10,10 +11,7 @@ type tokenClaims struct {
 	Username string
 }
 
-const (
-	signingKey = "" // Your token
-	tokenTTL   = time.Hour
-)
+const tokenTTL = time.Hour
 
 func GenerateJWT(username string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &tokenClaims{
@@ -24,5 +22,5 @@ func GenerateJWT(username string) (string, error) {
 		username,
 	})
 
-	return token.SignedString([]byte(signingKey))
+	return token.SignedString([]byte(os.Getenv("SIGNINKEY")))
 }

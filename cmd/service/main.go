@@ -4,16 +4,20 @@ import (
 	"fmt"
 	"github.com/golovpeter/clever_notes_2/internal/handlers/signin"
 	"github.com/golovpeter/clever_notes_2/internal/handlers/signup"
-	"github.com/golovpeter/clever_notes_2/internal/storage"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/jmoiron/sqlx"
 	"log"
 	"net/http"
+	"os"
 )
 
 func main() {
-	url := fmt.Sprintf("postgres://%s:%d@%s:%d/%s", storage.User, storage.Password,
-		storage.Host, storage.Port, storage.Dbname)
+	url := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
+		os.Getenv("POSTGRES_USER"),
+		os.Getenv("POSTGRES_PASSWORD"),
+		os.Getenv("POSTGRES_HOST"),
+		os.Getenv("POSTGRES_PORT"),
+		os.Getenv("POSTGRES_DB_NAME"))
 
 	db, err := sqlx.Connect("pgx", url)
 	if err != nil {
@@ -24,7 +28,7 @@ func main() {
 	mux.Handle("/signup", signup.NewSignUpHandler(db))
 	mux.Handle("/signin", signin.NewSignInHandler(db))
 
-	log.Fatal(http.ListenAndServe(":8080", mux))
+	log.Fatal(http.ListenAndServe(os.Getenv("PORT"), mux))
 
 	defer db.Close()
 }
