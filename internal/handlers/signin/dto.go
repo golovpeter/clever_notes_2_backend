@@ -1,12 +1,8 @@
 package signin
 
 type SignIn struct {
-	Username string
-	Password string
-}
-
-type Out struct {
-	Token string
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 type User struct {

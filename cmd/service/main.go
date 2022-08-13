@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/golovpeter/clever_notes_2/internal/handlers/signin"
 	"github.com/golovpeter/clever_notes_2/internal/handlers/signup"
+	"github.com/golovpeter/clever_notes_2/internal/handlers/update_token"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/jmoiron/sqlx"
 	"log"
@@ -27,6 +28,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.Handle("/signup", signup.NewSignUpHandler(db))
 	mux.Handle("/signin", signin.NewSignInHandler(db))
+	mux.Handle("/updateToken", update_token.NewUpdateTokenHandler(db))
 
 	log.Fatal(http.ListenAndServe(os.Getenv("PORT"), mux))
 

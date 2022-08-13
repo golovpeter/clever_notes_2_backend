@@ -13,7 +13,7 @@ type tokenClaims struct {
 }
 
 const (
-	tokenTTL        = time.Hour
+	tokenTTL        = time.Second //time.Hour
 	refreshTokenTTL = time.Hour * 720
 )
 
@@ -58,5 +58,4 @@ func ParseToken(inputToken string) (jwt.MapClaims, error) {
 	}
 
 	return claims, nil
-
 }

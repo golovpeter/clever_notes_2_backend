@@ -26,11 +26,17 @@ func (s *signUpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
 
-	var in SignUp
+	var in SignUpIn
 
 	err := json.NewDecoder(r.Body).Decode(&in)
 
 	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = fmt.Fprint(w, "Incorrect data input")
+		return
+	}
+
+	if !validateIn(in) {
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = fmt.Fprint(w, "Incorrect data input")
 		return
@@ -65,4 +71,8 @@ func (s *signUpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		_, _ = fmt.Fprint(w, "Element already registered")
 		return
 	}
+}
+
+func validateIn(in SignUpIn) bool {
+	return in.Username != "" && in.Password != ""
 }

@@ -37,6 +37,12 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !validateIn(in) {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = fmt.Fprint(w, "Incorrect data input")
+		return
+	}
+
 	var elementExist bool
 	err = s.Db.Get(&elementExist, "select exists(select username from users where username = $1)", in.Username)
 
@@ -105,4 +111,8 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else {
 		_, _ = fmt.Fprint(w, "The user is not registered")
 	}
+}
+
+func validateIn(in SignIn) bool {
+	return in.Username != "" && in.Password != ""
 }
