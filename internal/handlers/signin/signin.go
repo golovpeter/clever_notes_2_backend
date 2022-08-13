@@ -47,6 +47,7 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err = s.Db.Get(&elementExist, "select exists(select username from users where username = $1)", in.Username)
 
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		log.Fatalln()
 		return
 	}
@@ -61,7 +62,7 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err = s.Db.Get(&userData, "select user_id, username, password from users where  username = $1", in.Username)
 
 	if in.Username != userData.Username || hasher.GeneratePasswordHash(in.Password) != userData.Password {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = fmt.Fprint(w, "Incorrect username or password")
 		return
 	}
@@ -70,17 +71,25 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err = s.Db.Get(&tokensExist, "select exists(select user_id from tokens where user_id = $1)", userData.User_id)
 
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		log.Fatalln(err)
 		return
 	}
 
 	if tokensExist {
-		s.Db.Query("delete from tokens where user_id = $1", userData.User_id)
+		_, err = s.Db.Query("delete from tokens where user_id = $1", userData.User_id)
+
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			log.Fatalln(err)
+			return
+		}
 	}
 
 	accessToken, err := token_generator.GenerateJWT(in.Username)
 
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		log.Fatalln(err)
 		return
 	}
@@ -88,6 +97,7 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	refreshToken, err := token_generator.GenerateRefreshJWT()
 
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		log.Fatalln(err)
 		return
 	}
@@ -95,18 +105,21 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	out, err := json.Marshal(map[string]string{"access_token": accessToken, "refresh_token": refreshToken})
 
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		log.Fatalln(err)
 		return
 	}
 
-	tx := s.Db.MustBegin()
-
-	tx.MustExec("insert into tokens values ((select user_id from users where users.user_id = $1), $2, $3)",
+	_, err = s.Db.Query("insert into tokens values ((select user_id from users where users.user_id = $1), $2, $3)",
 		userData.User_id,
 		accessToken,
 		refreshToken)
 
-	tx.Commit()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Fatalln(err)
+		return
+	}
 
 	wrote, err := w.Write(out)
 	if err != nil || wrote != len(out) {
