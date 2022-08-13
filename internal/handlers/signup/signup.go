@@ -46,31 +46,32 @@ func (s *signUpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err = s.Db.Get(&elementExist, "select exists(select username from users where username = $1)", in.Username)
 
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		log.Fatalln(err)
 		return
 	}
 
-	if !elementExist {
-
-		tx := s.Db.MustBegin()
-
-		tx.MustExec("insert into users (username, password) values ($1, $2)",
-			in.Username, hasher.GeneratePasswordHash(in.Password))
-
-		err = tx.Commit()
-
-		if err != nil {
-			log.Fatalln(err)
-			return
-		}
-
-		_, _ = fmt.Fprintf(w, "User succesful register")
-		return
-
-	} else {
+	if elementExist {
+		w.WriteHeader(http.StatusBadRequest)
 		_, _ = fmt.Fprint(w, "Element already registered")
 		return
 	}
+
+	tx := s.Db.MustBegin()
+
+	tx.MustExec("insert into users (username, password) values ($1, $2)",
+		in.Username, hasher.GeneratePasswordHash(in.Password))
+
+	err = tx.Commit()
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Fatalln(err)
+		return
+	}
+
+	_, _ = fmt.Fprintf(w, "User succesful register")
+	return
 }
 
 func validateIn(in SignUpIn) bool {

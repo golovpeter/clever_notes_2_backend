@@ -2,7 +2,9 @@ package update_token
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/golovpeter/clever_notes_2/internal/common/token_generator"
 	"github.com/jmoiron/sqlx"
 	"log"
@@ -41,63 +43,82 @@ func (u *updateTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = token_generator.ParseToken(in.AccessToken)
+	_, err = token_generator.ParseToken(in.RefreshToken)
 
-	if err != nil && err.Error() == "Token is expired" {
+	if err != nil && errors.Is(err, jwt.ErrTokenExpired) {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = fmt.Fprint(w, "Refresh token expired")
+		return
+	}
 
-		var tokenExist bool
-		err := u.db.Get(&tokenExist,
-			"select exists(select access_token, refresh_token from tokens where access_token = $1 and  refresh_token = $2)",
-			in.AccessToken,
-			in.RefreshToken)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Fatalln(err)
+		return
+	}
 
-		if err != nil {
-			log.Fatalln(err)
-			return
-		}
+	var tokenExist bool
+	err = u.db.Get(&tokenExist,
+		"select exists(select access_token, refresh_token from tokens where access_token = $1 and  refresh_token = $2)",
+		in.AccessToken,
+		in.RefreshToken)
 
-		if tokenExist {
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Fatalln(err)
+		return
+	}
 
-			var username string
-			err := u.db.Get(&username,
-				"select username from users inner join tokens n on users.user_id = n.user_id where refresh_token = $1", in.RefreshToken)
+	if !tokenExist {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = fmt.Fprint(w, "There are no such tokens")
+		return
+	}
 
-			if err != nil {
-				log.Fatalln(err)
-			}
+	var username string
+	err = u.db.Get(&username,
+		"select username from users inner join tokens n on users.user_id = n.user_id where refresh_token = $1", in.RefreshToken)
 
-			newAccessToken, err := token_generator.GenerateJWT(username)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Fatalln(err)
+		return
+	}
 
-			if err != nil {
-				log.Fatalln(err)
-				return
-			}
+	newAccessToken, err := token_generator.GenerateJWT(username)
 
-			newRefreshToken, err := token_generator.GenerateRefreshJWT()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Fatalln(err)
+		return
+	}
 
-			_, err = u.db.Query("update tokens set access_token = $1, refresh_token = $2 where refresh_token = $3",
-				newAccessToken,
-				newRefreshToken,
-				in.RefreshToken)
+	newRefreshToken, err := token_generator.GenerateRefreshJWT()
 
-			if err != nil {
-				log.Fatalln(err)
-				return
-			}
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Fatalln(err)
+		return
+	}
 
-			out, err := json.Marshal(map[string]string{"access_token": newAccessToken, "refresh_token": newRefreshToken})
+	_, err = u.db.Query("update tokens set access_token = $1, refresh_token = $2 where refresh_token = $3",
+		newAccessToken,
+		newRefreshToken,
+		in.RefreshToken)
 
-			wrote, err := w.Write(out)
-			if err != nil || wrote != len(out) {
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-		} else {
-			w.WriteHeader(http.StatusBadRequest)
-			_, _ = fmt.Fprint(w, "There are no such tokens")
-		}
-	} else {
-		_, _ = fmt.Fprint(w, "The token has not expired yet")
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Fatalln(err)
+		return
+	}
+
+	out, err := json.Marshal(map[string]string{"access_token": newAccessToken, "refresh_token": newRefreshToken})
+
+	wrote, err := w.Write(out)
+	if err != nil || wrote != len(out) {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Fatalln(err)
+		return
 	}
 }
 
