@@ -39,7 +39,7 @@ func (u *updateTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err := token_generator.ParseToken(in.RefreshToken)
+	err := token_generator.ValidateToken(in.RefreshToken)
 
 	if err != nil && errors.Is(err, jwt.ErrTokenExpired) {
 		w.WriteHeader(http.StatusBadRequest)

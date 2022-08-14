@@ -1,7 +1,6 @@
 package logout
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	"log"
@@ -27,13 +26,7 @@ func (l *logOutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	var in LogOutIn
 
-	err := json.NewDecoder(r.Body).Decode(&in)
-
-	if err != nil || !validateIn(in) {
-		w.WriteHeader(http.StatusBadRequest)
-		_, _ = fmt.Fprint(w, "Incorrect data input")
-		return
-	}
+	in.AccessToken = r.Header.Get("access_token")
 
 	if !validateIn(in) {
 		w.WriteHeader(http.StatusBadRequest)
@@ -42,7 +35,7 @@ func (l *logOutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var tokenExist bool
-	err = l.Db.Get(&tokenExist, "select exists(select access_token from tokens where access_token = $1)",
+	err := l.Db.Get(&tokenExist, "select exists(select access_token from tokens where access_token = $1)",
 		in.AccessToken)
 
 	if err != nil {
@@ -64,6 +57,8 @@ func (l *logOutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Fatalln(err)
 		return
 	}
+
+	_, _ = fmt.Fprint(w, "Token successful deleted")
 
 }
 

@@ -13,7 +13,7 @@ type tokenClaims struct {
 }
 
 const (
-	tokenTTL        = time.Second //time.Hour
+	tokenTTL        = time.Hour
 	refreshTokenTTL = time.Hour * 720
 )
 
@@ -37,8 +37,8 @@ func GenerateRefreshJWT() (string, error) {
 	return token.SignedString([]byte(os.Getenv("SIGNINKEY")))
 }
 
-func ParseToken(inputToken string) (jwt.MapClaims, error) {
-	token, err := jwt.Parse(inputToken, func(token *jwt.Token) (i interface{}, err error) {
+func ValidateToken(inputToken string) error {
+	_, err := jwt.Parse(inputToken, func(token *jwt.Token) (i interface{}, err error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %s", token.Header["alg"])
 		}
@@ -47,15 +47,8 @@ func ParseToken(inputToken string) (jwt.MapClaims, error) {
 	})
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	claims, ok := token.Claims.(jwt.MapClaims)
-
-	if !ok {
-		_ = fmt.Errorf("error get user claims from token")
-		return nil, err
-	}
-
-	return claims, nil
+	return nil
 }
