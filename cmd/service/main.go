@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/golovpeter/clever_notes_2/internal/handlers/add_note"
 	"github.com/golovpeter/clever_notes_2/internal/handlers/logout"
 	"github.com/golovpeter/clever_notes_2/internal/handlers/signin"
 	"github.com/golovpeter/clever_notes_2/internal/handlers/signup"
@@ -27,10 +28,16 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
-	mux.Handle("/signup", signup.NewSignUpHandler(db))
-	mux.Handle("/signin", signin.NewSignInHandler(db))
-	mux.Handle("/logout", logout.NewLogOutHandler(db))
-	mux.Handle("/updateToken", update_token.NewUpdateTokenHandler(db))
+
+	// Authentication
+	mux.Handle("/sign-up", signup.NewSignUpHandler(db))
+	mux.Handle("/sign-in", signin.NewSignInHandler(db))
+	mux.Handle("/logo-ut", logout.NewLogOutHandler(db))
+
+	// Working with notes
+	mux.Handle("/add-note", add_note.NewAddNoteHandler(db))
+
+	mux.Handle("/update-token", update_token.NewUpdateTokenHandler(db))
 
 	log.Fatal(http.ListenAndServe(os.Getenv("PORT"), mux))
 

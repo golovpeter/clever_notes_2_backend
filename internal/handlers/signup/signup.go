@@ -57,12 +57,8 @@ func (s *signUpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tx := s.Db.MustBegin()
-
-	tx.MustExec("insert into users (username, password) values ($1, $2)",
+	_, err = s.Db.Query("insert into users (username, password) values ($1, $2)",
 		in.Username, hasher.GeneratePasswordHash(in.Password))
-
-	err = tx.Commit()
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
