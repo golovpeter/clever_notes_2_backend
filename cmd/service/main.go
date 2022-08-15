@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/golovpeter/clever_notes_2/internal/handlers/add_note"
+	"github.com/golovpeter/clever_notes_2/internal/handlers/delete_note"
 	"github.com/golovpeter/clever_notes_2/internal/handlers/log_out"
 	"github.com/golovpeter/clever_notes_2/internal/handlers/sign_in"
 	"github.com/golovpeter/clever_notes_2/internal/handlers/sign_up"
@@ -38,7 +39,7 @@ func main() {
 	// Working with notes
 	mux.Handle("/add-note", add_note.NewAddNoteHandler(db))
 	mux.Handle("/update-note", update_note.NewUpdateNoteHandler(db))
-
+	mux.Handle("/delete-note", delete_note.NewDeleteNoteHandler(db))
 	mux.Handle("/update-token", update_token.NewUpdateTokenHandler(db))
 
 	log.Fatal(http.ListenAndServe(os.Getenv("PORT"), mux))
