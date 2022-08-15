@@ -96,7 +96,22 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, _ = fmt.Fprint(w, "Note successful added")
+	var noteId int
+	err = a.db.Get(&noteId, "select max(note_id) from notes")
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Fatalln(err)
+		return
+	}
+
+	out, err := json.Marshal(map[string]int{"note_id": noteId})
+
+	wrote, err := w.Write(out)
+	if err != nil || wrote != len(out) {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }
 
 func validateIn(in AddNoteIn) bool {
