@@ -1,4 +1,4 @@
-package add_note
+package get_add_notes
 
 import (
 	"encoding/json"
@@ -11,34 +11,18 @@ import (
 	"net/http"
 )
 
-type addNoteHandler struct {
+type getAllNotesHandel struct {
 	db *sqlx.DB
 }
 
-func NewAddNoteHandler(db *sqlx.DB) *addNoteHandler {
-	return &addNoteHandler{db: db}
+func NewGetAllNotesHandler(db *sqlx.DB) *getAllNotesHandel {
+	return &getAllNotesHandel{db: db}
 }
 
-func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (g *getAllNotesHandel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		_, _ = fmt.Fprint(w, "Unsupported method")
-		return
-	}
-
-	var in AddNoteIn
-
-	err := json.NewDecoder(r.Body).Decode(&in)
-
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		_, _ = fmt.Fprint(w, "Incorrect data input")
-		return
-	}
-
-	if !validateIn(in) {
-		w.WriteHeader(http.StatusBadRequest)
-		_, _ = fmt.Fprint(w, "Incorrect data input")
 		return
 	}
 
@@ -51,7 +35,7 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var tokenExist bool
-	err = a.db.Get(&tokenExist, "select exists(select access_token from tokens where access_token = $1)", accessToken)
+	err := g.db.Get(&tokenExist, "select exists(select access_token from tokens where access_token = $1)", accessToken)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -80,7 +64,7 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var userId int
-	err = a.db.Get(&userId, "select user_id from tokens where access_token = $1", accessToken)
+	err = g.db.Get(&userId, "select user_id from tokens where access_token = $1", accessToken)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -88,32 +72,14 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = a.db.Query("insert into notes(user_id, note) values ($1, $2)", userId, in.Note)
+	var notes []string
+	err = g.db.Select(&notes, "select note from notes where user_id = $1", userId)
 
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Fatalln(err)
-		return
-	}
-
-	var noteId int
-	err = a.db.Get(&noteId, "select max(note_id) from notes")
-
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Fatalln(err)
-		return
-	}
-
-	out, err := json.Marshal(map[string]int{"note_id": noteId})
+	out, err := json.Marshal(map[string][]string{"notes": notes})
 
 	wrote, err := w.Write(out)
 	if err != nil || wrote != len(out) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-}
-
-func validateIn(in AddNoteIn) bool {
-	return in.Note != ""
 }
