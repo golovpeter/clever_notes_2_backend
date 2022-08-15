@@ -6,6 +6,7 @@ import (
 	"github.com/golovpeter/clever_notes_2/internal/handlers/log_out"
 	"github.com/golovpeter/clever_notes_2/internal/handlers/sign_in"
 	"github.com/golovpeter/clever_notes_2/internal/handlers/sign_up"
+	"github.com/golovpeter/clever_notes_2/internal/handlers/update_note"
 	"github.com/golovpeter/clever_notes_2/internal/handlers/update_token"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/jmoiron/sqlx"
@@ -36,6 +37,7 @@ func main() {
 
 	// Working with notes
 	mux.Handle("/add-note", add_note.NewAddNoteHandler(db))
+	mux.Handle("/update-note", update_note.NewUpdateNoteHandler(db))
 
 	mux.Handle("/update-token", update_token.NewUpdateTokenHandler(db))
 
