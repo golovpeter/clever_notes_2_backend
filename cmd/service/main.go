@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 	"github.com/golovpeter/clever_notes_2/internal/handlers/add_note"
-	"github.com/golovpeter/clever_notes_2/internal/handlers/logout"
-	"github.com/golovpeter/clever_notes_2/internal/handlers/signin"
-	"github.com/golovpeter/clever_notes_2/internal/handlers/signup"
+	"github.com/golovpeter/clever_notes_2/internal/handlers/log_out"
+	"github.com/golovpeter/clever_notes_2/internal/handlers/sign_in"
+	"github.com/golovpeter/clever_notes_2/internal/handlers/sign_up"
 	"github.com/golovpeter/clever_notes_2/internal/handlers/update_token"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/jmoiron/sqlx"
@@ -30,9 +30,9 @@ func main() {
 	mux := http.NewServeMux()
 
 	// Authentication
-	mux.Handle("/sign-up", signup.NewSignUpHandler(db))
-	mux.Handle("/sign-in", signin.NewSignInHandler(db))
-	mux.Handle("/logo-ut", logout.NewLogOutHandler(db))
+	mux.Handle("/sign-up", sign_up.NewSignUpHandler(db))
+	mux.Handle("/sign-in", sign_in.NewSignInHandler(db))
+	mux.Handle("/logo-ut", log_out.NewLogOutHandler(db))
 
 	// Working with notes
 	mux.Handle("/add-note", add_note.NewAddNoteHandler(db))
