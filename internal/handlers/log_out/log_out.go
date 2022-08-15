@@ -1,4 +1,4 @@
-package logout
+package log_out
 
 import (
 	"fmt"

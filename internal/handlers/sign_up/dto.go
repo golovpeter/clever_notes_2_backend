@@ -1,4 +1,4 @@
-package signup
+package sign_up
 
 type SignUpIn struct {
 	Username string `json:"username"`
