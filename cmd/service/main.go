@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/golovpeter/clever_notes_2/internal/common/enable_cors"
 	"github.com/golovpeter/clever_notes_2/internal/handlers/add_note"
 	"github.com/golovpeter/clever_notes_2/internal/handlers/delete_note"
 	"github.com/golovpeter/clever_notes_2/internal/handlers/get_add_notes"
@@ -33,17 +34,17 @@ func main() {
 	mux := http.NewServeMux()
 
 	// Authentication
-	mux.Handle("/sign-up", sign_up.NewSignUpHandler(db))
-	mux.Handle("/sign-in", sign_in.NewSignInHandler(db))
-	mux.Handle("/logo-ut", log_out.NewLogOutHandler(db))
+	mux.Handle("/sign-up", enable_cors.CORS(sign_up.NewSignUpHandler(db)))
+	mux.Handle("/sign-in", enable_cors.CORS(sign_in.NewSignInHandler(db)))
+	mux.Handle("/logo-ut", enable_cors.CORS(log_out.NewLogOutHandler(db)))
 
 	// Working with notes
-	mux.Handle("/add-note", add_note.NewAddNoteHandler(db))
-	mux.Handle("/update-note", update_note.NewUpdateNoteHandler(db))
-	mux.Handle("/delete-note", delete_note.NewDeleteNoteHandler(db))
+	mux.Handle("/add-note", enable_cors.CORS(add_note.NewAddNoteHandler(db)))
+	mux.Handle("/update-note", enable_cors.CORS(update_note.NewUpdateNoteHandler(db)))
+	mux.Handle("/delete-note", enable_cors.CORS(delete_note.NewDeleteNoteHandler(db)))
 
-	mux.Handle("/get-all-notes", get_add_notes.NewGetAllNotesHandler(db))
-	mux.Handle("/update-token", update_token.NewUpdateTokenHandler(db))
+	mux.Handle("/get-all-notes", enable_cors.CORS(get_add_notes.NewGetAllNotesHandler(db)))
+	mux.Handle("/update-token", enable_cors.CORS(update_token.NewUpdateTokenHandler(db)))
 
 	log.Fatal(http.ListenAndServe(os.Getenv("PORT"), mux))
 
