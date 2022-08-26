@@ -36,7 +36,7 @@ func main() {
 	// Authentication
 	mux.Handle("/sign-up", enable_cors.CORS(sign_up.NewSignUpHandler(db)))
 	mux.Handle("/sign-in", enable_cors.CORS(sign_in.NewSignInHandler(db)))
-	mux.Handle("/logo-ut", enable_cors.CORS(log_out.NewLogOutHandler(db)))
+	mux.Handle("/log-out", enable_cors.CORS(log_out.NewLogOutHandler(db)))
 
 	// Working with notes
 	mux.Handle("/add-note", enable_cors.CORS(add_note.NewAddNoteHandler(db)))

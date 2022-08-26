@@ -1,7 +1,7 @@
 package log_out
 
 import (
-	"fmt"
+	"github.com/golovpeter/clever_notes_2/internal/common/make_response"
 	"github.com/jmoiron/sqlx"
 	"log"
 	"net/http"
@@ -18,7 +18,11 @@ func NewLogOutHandler(db *sqlx.DB) *logOutHandler {
 func (l *logOutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		_, _ = fmt.Fprint(w, "Unsupported method")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		make_response.MakeResponse(w, map[string]string{
+			"errorCode":    "1",
+			"errorMessage": "Unsupported method",
+		})
 		return
 	}
 
@@ -30,7 +34,10 @@ func (l *logOutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if !validateIn(in) {
 		w.WriteHeader(http.StatusBadRequest)
-		_, _ = fmt.Fprint(w, "Incorrect data input")
+		make_response.MakeResponse(w, map[string]string{
+			"errorCode":    "1",
+			"errorMessage": "Incorrect header input",
+		})
 		return
 	}
 
@@ -46,7 +53,10 @@ func (l *logOutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if !tokenExist {
 		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = fmt.Fprint(w, "There are no such tokens")
+		make_response.MakeResponse(w, map[string]string{
+			"errorCode":    "1",
+			"errorMessage": "There are no such tokens!",
+		})
 		return
 	}
 
@@ -58,7 +68,10 @@ func (l *logOutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, _ = fmt.Fprint(w, "Token successful deleted")
+	make_response.MakeResponse(w, map[string]string{
+		"errorCode": "0",
+		"message":   "Token successful deleted",
+	})
 
 }
 

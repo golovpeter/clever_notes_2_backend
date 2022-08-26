@@ -2,8 +2,8 @@ package sign_in
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/golovpeter/clever_notes_2/internal/common/hasher"
+	"github.com/golovpeter/clever_notes_2/internal/common/make_response"
 	"github.com/golovpeter/clever_notes_2/internal/common/token_generator"
 	"github.com/jmoiron/sqlx"
 	"log"
@@ -21,7 +21,10 @@ func NewSignInHandler(db *sqlx.DB) *signInHandler {
 func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		_, _ = fmt.Fprint(w, "Unsupported method")
+		make_response.MakeResponse(w, map[string]string{
+			"errorCode":    "1",
+			"errorMessage": "Unsupported method",
+		})
 		return
 	}
 
@@ -33,13 +36,19 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		_, _ = fmt.Fprint(w, "Incorrect data input")
+		make_response.MakeResponse(w, map[string]string{
+			"errorCode":    "1",
+			"errorMessage": "Incorrect data input",
+		})
 		return
 	}
 
 	if !validateIn(in) {
 		w.WriteHeader(http.StatusBadRequest)
-		_, _ = fmt.Fprint(w, "Incorrect data input")
+		make_response.MakeResponse(w, map[string]string{
+			"errorCode":    "1",
+			"errorMessage": "Incorrect data input",
+		})
 		return
 	}
 
@@ -54,7 +63,10 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if !elementExist {
 		w.WriteHeader(http.StatusBadRequest)
-		_, _ = fmt.Fprint(w, "The user is not registered")
+		make_response.MakeResponse(w, map[string]string{
+			"errorCode":    "1",
+			"errorMessage": "The user is not registered!",
+		})
 		return
 	}
 
@@ -62,8 +74,11 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err = s.Db.Get(&userData, "select user_id, username, password from users where  username = $1", in.Username)
 
 	if in.Username != userData.Username || hasher.GeneratePasswordHash(in.Password) != userData.Password {
-		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = fmt.Fprint(w, "Incorrect username or password")
+		w.WriteHeader(http.StatusInternalServerError) // w.WriteHeader(http.StatusUnauthorized)
+		make_response.MakeResponse(w, map[string]string{
+			"errorCode":    "1",
+			"errorMessage": "Incorrect password!",
+		})
 		return
 	}
 
@@ -102,14 +117,6 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	out, err := json.Marshal(map[string]string{"access_token": accessToken, "refresh_token": refreshToken})
-
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Fatalln(err)
-		return
-	}
-
 	_, err = s.Db.Query("insert into tokens values ((select user_id from users where users.user_id = $1), $2, $3)",
 		userData.User_id,
 		accessToken,
@@ -121,11 +128,10 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wrote, err := w.Write(out)
-	if err != nil || wrote != len(out) {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	make_response.MakeResponse(w, map[string]string{
+		"access_token":  accessToken,
+		"refresh_token": refreshToken,
+	})
 }
 
 func validateIn(in SignIn) bool {

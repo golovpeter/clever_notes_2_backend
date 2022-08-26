@@ -1,4 +1,4 @@
-package handle_errors
+package make_response
 
 import (
 	"encoding/json"
@@ -6,8 +6,9 @@ import (
 	"net/http"
 )
 
-func HandleError(w http.ResponseWriter, errorMessage string) {
-	out, err := json.Marshal(map[string]string{"errorCode": "1", "errorMessage": errorMessage})
+func MakeResponse(w http.ResponseWriter, els map[string]string) {
+
+	out, err := json.Marshal(els)
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)

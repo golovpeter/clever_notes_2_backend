@@ -2,8 +2,8 @@ package sign_up
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/golovpeter/clever_notes_2/internal/common/hasher"
+	"github.com/golovpeter/clever_notes_2/internal/common/make_response"
 	"github.com/jmoiron/sqlx"
 	"log"
 	"net/http"
@@ -20,7 +20,10 @@ func NewSignUpHandler(db *sqlx.DB) *signUpHandler {
 func (s *signUpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		_, _ = fmt.Fprint(w, "Unsupported method")
+		make_response.MakeResponse(w, map[string]string{
+			"errorCode":    "1",
+			"errorMessage": "Unsupported method",
+		})
 		return
 	}
 
@@ -32,13 +35,19 @@ func (s *signUpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		_, _ = fmt.Fprint(w, "Incorrect data input")
+		make_response.MakeResponse(w, map[string]string{
+			"errorCode":    "1",
+			"errorMessage": "Incorrect data input",
+		})
 		return
 	}
 
 	if !validateIn(in) {
 		w.WriteHeader(http.StatusBadRequest)
-		_, _ = fmt.Fprint(w, "Incorrect data input")
+		make_response.MakeResponse(w, map[string]string{
+			"errorCode":    "1",
+			"errorMessage": "Incorrect data input",
+		})
 		return
 	}
 
@@ -53,7 +62,10 @@ func (s *signUpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if elementExist {
 		w.WriteHeader(http.StatusBadRequest)
-		_, _ = fmt.Fprint(w, "Element already registered")
+		make_response.MakeResponse(w, map[string]string{
+			"errorCode":    "1",
+			"errorMessage": "User already registered!",
+		})
 		return
 	}
 
@@ -66,7 +78,11 @@ func (s *signUpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, _ = fmt.Fprintf(w, "User succesful register")
+	make_response.MakeResponse(w, map[string]string{
+		"errorCode": "0",
+		"message":   "Registration was successful!",
+	})
+
 	return
 }
 

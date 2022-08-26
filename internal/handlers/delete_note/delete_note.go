@@ -3,8 +3,8 @@ package delete_note
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/golovpeter/clever_notes_2/internal/common/make_response"
 	"github.com/golovpeter/clever_notes_2/internal/common/token_generator"
 	"github.com/jmoiron/sqlx"
 	"log"
@@ -22,7 +22,10 @@ func NewDeleteNoteHandler(db *sqlx.DB) *deleteNoteHandler {
 func (d *deleteNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		_, _ = fmt.Fprint(w, "Unsupported method")
+		make_response.MakeResponse(w, map[string]string{
+			"errorCode":    "1",
+			"errorMessage": "Unsupported method",
+		})
 		return
 	}
 
@@ -32,13 +35,19 @@ func (d *deleteNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		_, _ = fmt.Fprint(w, "Incorrect data input")
+		make_response.MakeResponse(w, map[string]string{
+			"errorCode":    "1",
+			"errorMessage": "Incorrect data input",
+		})
 		return
 	}
 
 	if !validateIn(in) {
 		w.WriteHeader(http.StatusBadRequest)
-		_, _ = fmt.Fprint(w, "Incorrect data input")
+		make_response.MakeResponse(w, map[string]string{
+			"errorCode":    "1",
+			"errorMessage": "Incorrect data input",
+		})
 		return
 	}
 
@@ -46,7 +55,10 @@ func (d *deleteNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if accessToken == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		_, _ = fmt.Fprint(w, "Incorrect header input")
+		make_response.MakeResponse(w, map[string]string{
+			"errorCode":    "1",
+			"errorMessage": "Incorrect header input",
+		})
 		return
 	}
 
@@ -61,7 +73,10 @@ func (d *deleteNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if !tokenExist {
 		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = fmt.Fprint(w, "There are no such tokens")
+		make_response.MakeResponse(w, map[string]string{
+			"errorCode":    "1",
+			"errorMessage": "There are no such tokens",
+		})
 		return
 	}
 
@@ -69,7 +84,10 @@ func (d *deleteNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil && errors.Is(err, jwt.ErrTokenExpired) {
 		w.WriteHeader(http.StatusUnauthorized)
-		_, _ = fmt.Fprint(w, "Access token expired")
+		make_response.MakeResponse(w, map[string]string{
+			"errorCode":    "1",
+			"errorMessage": "Access token expired",
+		})
 		return
 	}
 
@@ -93,13 +111,19 @@ func (d *deleteNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if noteUserId == 0 {
 		w.WriteHeader(http.StatusBadRequest)
-		_, _ = fmt.Fprint(w, "There is no such note")
+		make_response.MakeResponse(w, map[string]string{
+			"errorCode":    "1",
+			"errorMessage": "There is no such note",
+		})
 		return
 	}
 
 	if noteUserId != userId {
 		w.WriteHeader(http.StatusBadRequest)
-		_, _ = fmt.Fprint(w, "This note belongs to another user")
+		make_response.MakeResponse(w, map[string]string{
+			"errorCode":    "1",
+			"errorMessage": "This note belongs to another user",
+		})
 		return
 	}
 
@@ -111,7 +135,10 @@ func (d *deleteNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, _ = fmt.Fprint(w, "Note successful deleted")
+	make_response.MakeResponse(w, map[string]string{
+		"errorCode":    "0",
+		"errorMessage": "note successful deleted",
+	})
 }
 
 func validateIn(in DeleteNoteIn) bool {

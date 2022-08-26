@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/golovpeter/clever_notes_2/internal/common/make_response"
 	"github.com/golovpeter/clever_notes_2/internal/common/token_generator"
 	"github.com/jmoiron/sqlx"
 	"log"
@@ -61,7 +62,10 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if !tokenExist {
 		w.WriteHeader(http.StatusUnauthorized)
-		_, _ = fmt.Fprint(w, "The user is not authorized")
+		make_response.MakeResponse(w, map[string]string{
+			"errorCode":    "1",
+			"errorMessage": "The user is not authorized!",
+		})
 		return
 	}
 
@@ -69,7 +73,10 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil && errors.Is(err, jwt.ErrTokenExpired) {
 		w.WriteHeader(http.StatusUnauthorized)
-		_, _ = fmt.Fprint(w, "Access token expired")
+		make_response.MakeResponse(w, map[string]string{
+			"errorCode":    "1",
+			"errorMessage": "access token expired",
+		})
 		return
 	}
 
@@ -112,6 +119,11 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	make_response.MakeResponse(w, map[string]string{
+		"errorCode": "0",
+		"message":   "note successful added",
+	})
 }
 
 func validateIn(in AddNoteIn) bool {
