@@ -108,8 +108,9 @@ func (u *updateNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = u.db.Query("update notes set note = $1 where note_id = $2 and user_id = $3",
+	_, err = u.db.Query("update notes set note = $1, note_caption = $2 where note_id = $3 and user_id = $4",
 		in.NewNote,
+		in.NewNoteCaption,
 		in.NoteId,
 		userId)
 

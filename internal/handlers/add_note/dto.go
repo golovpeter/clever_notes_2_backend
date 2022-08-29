@@ -1,5 +1,6 @@
 package add_note
 
 type AddNoteIn struct {
-	Note string `json:"note"`
+	NoteCaption string `json:"note_caption"`
+	Note        string `json:"note"`
 }

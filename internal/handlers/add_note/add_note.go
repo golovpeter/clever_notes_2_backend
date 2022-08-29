@@ -95,7 +95,7 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = a.db.Query("insert into notes(user_id, note) values ($1, $2)", userId, in.Note)
+	_, err = a.db.Query("insert into notes(user_id, note_caption, note) values ($1, $2, $3)", userId, in.NoteCaption, in.Note)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -114,16 +114,19 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	out, err := json.Marshal(map[string]int{"note_id": noteId})
 
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Fatalln(err)
+		return
+	}
+
 	wrote, err := w.Write(out)
+
 	if err != nil || wrote != len(out) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	make_response.MakeResponse(w, map[string]string{
-		"errorCode": "0",
-		"message":   "note successful added",
-	})
 }
 
 func validateIn(in AddNoteIn) bool {
