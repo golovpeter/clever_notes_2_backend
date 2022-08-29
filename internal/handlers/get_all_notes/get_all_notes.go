@@ -1,4 +1,4 @@
-package get_add_notes
+package get_all_notes
 
 import (
 	"encoding/json"
@@ -86,10 +86,26 @@ func (g *getAllNotesHandel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var notes []string
-	err = g.db.Select(&notes, "select note from notes where user_id = $1", userId)
+	var notes []map[string]string
 
-	out, err := json.Marshal(map[string][]string{"notes": notes})
+	rows, err := g.db.Query("select note_caption, note from notes where user_id = $1", userId)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Fatalln(err)
+		return
+	}
+
+	for rows.Next() {
+		var noteCaption, note string
+		el := make(map[string]string)
+		_ = rows.Scan(&noteCaption, &note)
+		el["note_caption"] = noteCaption
+		el["note"] = note
+		notes = append(notes, el)
+	}
+
+	out, err := json.Marshal(map[string][]map[string]string{"notes": notes})
 
 	wrote, err := w.Write(out)
 	if err != nil || wrote != len(out) {
