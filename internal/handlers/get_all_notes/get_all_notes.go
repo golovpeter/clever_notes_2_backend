@@ -3,7 +3,6 @@ package get_all_notes
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/golovpeter/clever_notes_2/internal/common/make_response"
 	"github.com/golovpeter/clever_notes_2/internal/common/token_generator"
@@ -52,7 +51,6 @@ func (g *getAllNotesHandel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if !tokenExist {
 		w.WriteHeader(http.StatusUnauthorized)
-		_, _ = fmt.Fprint(w, "The user is not authorized")
 		make_response.MakeResponse(w, map[string]string{
 			"errorCode":    "1",
 			"errorMessage": "The user is not authorized",
