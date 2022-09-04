@@ -15,10 +15,6 @@ type getAllNotesHandel struct {
 	db *sqlx.DB
 }
 
-type Response struct {
-	Response []Note `json:"response"`
-}
-
 type Note struct {
 	Caption string `json:"note_caption"`
 	Text    string `json:"note"`
@@ -55,7 +51,7 @@ func (g *getAllNotesHandel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Fatalln(err)
+		log.Println(err)
 		return
 	}
 
@@ -81,7 +77,7 @@ func (g *getAllNotesHandel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Fatalln(err)
+		log.Println(err)
 		return
 	}
 
@@ -90,7 +86,7 @@ func (g *getAllNotesHandel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Fatalln(err)
+		log.Println(err)
 		return
 	}
 
@@ -100,7 +96,7 @@ func (g *getAllNotesHandel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Fatalln(err)
+		log.Println(err)
 		return
 	}
 
@@ -116,8 +112,8 @@ func (g *getAllNotesHandel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		notes = append(notes, el)
 	}
 
-	out, err := json.Marshal(Response{
-		Response: notes,
+	out, err := json.Marshal(GetAllNotesOut{
+		Notes: notes,
 	})
 
 	wrote, err := w.Write(out)

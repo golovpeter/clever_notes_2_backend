@@ -19,7 +19,6 @@ func NewUpdateTokenHandler(db *sqlx.DB) *updateTokenHandler {
 	return &updateTokenHandler{db: db}
 }
 
-//TODO: исправить log.Println на log.error
 func (u *updateTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		w.WriteHeader(http.StatusMethodNotAllowed)
