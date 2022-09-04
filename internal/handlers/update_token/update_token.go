@@ -3,8 +3,8 @@ package update_token
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/golovpeter/clever_notes_2/internal/common/make_response"
 	"github.com/golovpeter/clever_notes_2/internal/common/token_generator"
 	"github.com/jmoiron/sqlx"
 	"log"
@@ -19,10 +19,14 @@ func NewUpdateTokenHandler(db *sqlx.DB) *updateTokenHandler {
 	return &updateTokenHandler{db: db}
 }
 
+//TODO: исправить log.Println на log.error
 func (u *updateTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		_, _ = fmt.Fprint(w, "Unsupported method")
+		make_response.MakeResponse(w, map[string]string{
+			"errorCode":    "1",
+			"errorMessage": "unsupported method",
+		})
 		return
 	}
 
@@ -35,7 +39,10 @@ func (u *updateTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if !validateIn(in) {
 		w.WriteHeader(http.StatusBadRequest)
-		_, _ = fmt.Fprint(w, "Incorrect data input")
+		make_response.MakeResponse(w, map[string]string{
+			"errorCode":    "1",
+			"errorMessage": "incorrect header input",
+		})
 		return
 	}
 
@@ -43,13 +50,16 @@ func (u *updateTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil && errors.Is(err, jwt.ErrTokenExpired) {
 		w.WriteHeader(http.StatusBadRequest)
-		_, _ = fmt.Fprint(w, "Refresh token expired")
+		make_response.MakeResponse(w, map[string]string{
+			"errorCode":    "1",
+			"errorMessage": "refresh token expired",
+		})
 		return
 	}
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Fatalln(err)
+		log.Println(err)
 		return
 	}
 
@@ -61,13 +71,16 @@ func (u *updateTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Fatalln(err)
+		log.Println(err)
 		return
 	}
 
 	if !tokenExist {
 		w.WriteHeader(http.StatusBadRequest)
-		_, _ = fmt.Fprint(w, "There are no such tokens")
+		make_response.MakeResponse(w, map[string]string{
+			"errorCode":    "1",
+			"errorMessage": "there are no suck tokens",
+		})
 		return
 	}
 
@@ -77,7 +90,7 @@ func (u *updateTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Fatalln(err)
+		log.Println(err)
 		return
 	}
 
@@ -85,7 +98,7 @@ func (u *updateTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Fatalln(err)
+		log.Println(err)
 		return
 	}
 
@@ -93,7 +106,7 @@ func (u *updateTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Fatalln(err)
+		log.Println(err)
 		return
 	}
 
@@ -104,7 +117,7 @@ func (u *updateTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Fatalln(err)
+		log.Println(err)
 		return
 	}
 
@@ -113,7 +126,7 @@ func (u *updateTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	wrote, err := w.Write(out)
 	if err != nil || wrote != len(out) {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Fatalln(err)
+		log.Println(err)
 		return
 	}
 }

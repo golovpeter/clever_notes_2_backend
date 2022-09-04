@@ -15,6 +15,15 @@ type getAllNotesHandel struct {
 	db *sqlx.DB
 }
 
+type Response struct {
+	Response []Note `json:"response"`
+}
+
+type Note struct {
+	Caption string `json:"note_caption"`
+	Text    string `json:"note"`
+}
+
 func NewGetAllNotesHandler(db *sqlx.DB) *getAllNotesHandel {
 	return &getAllNotesHandel{db: db}
 }
@@ -29,6 +38,7 @@ func (g *getAllNotesHandel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//TODO: передавать токен в хедере Authorization
 	accessToken := r.Header.Get("access_token")
 
 	if accessToken == "" {
@@ -84,7 +94,7 @@ func (g *getAllNotesHandel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var notes []map[string]string
+	notes := make([]Note, 0)
 
 	rows, err := g.db.Query("select note_caption, note from notes where user_id = $1", userId)
 
@@ -96,14 +106,19 @@ func (g *getAllNotesHandel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	for rows.Next() {
 		var noteCaption, note string
-		el := make(map[string]string)
 		_ = rows.Scan(&noteCaption, &note)
-		el["note_caption"] = noteCaption
-		el["note"] = note
+
+		el := Note{
+			Caption: noteCaption,
+			Text:    note,
+		}
+
 		notes = append(notes, el)
 	}
 
-	out, err := json.Marshal(map[string][]map[string]string{"notes": notes})
+	out, err := json.Marshal(Response{
+		Response: notes,
+	})
 
 	wrote, err := w.Write(out)
 	if err != nil || wrote != len(out) {

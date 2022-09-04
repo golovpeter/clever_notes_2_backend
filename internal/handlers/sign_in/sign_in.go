@@ -57,7 +57,7 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Fatalln()
+		log.Println()
 		return
 	}
 
@@ -87,7 +87,7 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Fatalln(err)
+		log.Println(err)
 		return
 	}
 
@@ -96,7 +96,7 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			log.Fatalln(err)
+			log.Println(err)
 			return
 		}
 	}
@@ -105,7 +105,7 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Fatalln(err)
+		log.Println(err)
 		return
 	}
 
@@ -113,7 +113,7 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Fatalln(err)
+		log.Println(err)
 		return
 	}
 
@@ -124,7 +124,7 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Fatalln(err)
+		log.Println(err)
 		return
 	}
 

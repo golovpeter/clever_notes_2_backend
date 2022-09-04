@@ -3,7 +3,6 @@ package add_note
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/golovpeter/clever_notes_2/internal/common/make_response"
 	"github.com/golovpeter/clever_notes_2/internal/common/token_generator"
@@ -23,7 +22,10 @@ func NewAddNoteHandler(db *sqlx.DB) *addNoteHandler {
 func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		_, _ = fmt.Fprint(w, "Unsupported method")
+		make_response.MakeResponse(w, map[string]string{
+			"errorCode":    "1",
+			"errorMessage": "Unsupported method",
+		})
 		return
 	}
 
@@ -33,13 +35,19 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		_, _ = fmt.Fprint(w, "Incorrect data input")
+		make_response.MakeResponse(w, map[string]string{
+			"errorCode":    "1",
+			"errorMessage": "Incorrect data input",
+		})
 		return
 	}
 
 	if !validateIn(in) {
 		w.WriteHeader(http.StatusBadRequest)
-		_, _ = fmt.Fprint(w, "Incorrect data input")
+		make_response.MakeResponse(w, map[string]string{
+			"errorCode":    "1",
+			"errorMessage": "Incorrect data input",
+		})
 		return
 	}
 
@@ -47,7 +55,10 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if accessToken == "" {
 		w.WriteHeader(http.StatusUnauthorized)
-		_, _ = fmt.Fprint(w, "Incorrect header input")
+		make_response.MakeResponse(w, map[string]string{
+			"errorCode":    "1",
+			"errorMessage": "Incorrect header input",
+		})
 		return
 	}
 
@@ -56,7 +67,7 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Fatalln(err)
+		log.Println(err)
 		return
 	}
 
@@ -82,7 +93,7 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Fatalln(err)
+		log.Println(err)
 		return
 	}
 
@@ -91,7 +102,7 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Fatalln(err)
+		log.Println(err)
 		return
 	}
 
@@ -99,7 +110,7 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Fatalln(err)
+		log.Println(err)
 		return
 	}
 
@@ -108,7 +119,7 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Fatalln(err)
+		log.Println(err)
 		return
 	}
 
@@ -116,7 +127,7 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		log.Fatalln(err)
+		log.Println(err)
 		return
 	}
 

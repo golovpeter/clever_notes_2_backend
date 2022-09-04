@@ -67,7 +67,7 @@ func (d *deleteNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Fatalln(err)
+		log.Println(err)
 		return
 	}
 
@@ -93,7 +93,7 @@ func (d *deleteNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Fatalln(err)
+		log.Println(err)
 		return
 	}
 
@@ -102,7 +102,7 @@ func (d *deleteNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Fatalln(err)
+		log.Println(err)
 		return
 	}
 
@@ -131,7 +131,7 @@ func (d *deleteNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Fatalln(err)
+		log.Println(err)
 		return
 	}
 
