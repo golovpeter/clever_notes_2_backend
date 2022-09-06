@@ -35,6 +35,7 @@ func (s *signUpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		log.Println(err)
 		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
 			ErrorCode:    "1",
 			ErrorMessage: "Incorrect data input",

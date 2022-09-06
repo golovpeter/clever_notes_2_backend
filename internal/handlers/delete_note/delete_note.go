@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/golovpeter/clever_notes_2/internal/common/make_error_response"
+	"github.com/golovpeter/clever_notes_2/internal/common/parse_auth_header"
 	"github.com/golovpeter/clever_notes_2/internal/common/token_generator"
 	"github.com/jmoiron/sqlx"
 	"log"
@@ -35,6 +36,7 @@ func (d *deleteNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		log.Println(err)
 		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
 			ErrorCode:    "1",
 			ErrorMessage: "Incorrect data input",
@@ -51,14 +53,10 @@ func (d *deleteNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken := r.Header.Get("access_token")
+	accessToken, err := parse_auth_header.ParseAuthHeader(w, r)
 
-	if accessToken == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
-			ErrorCode:    "1",
-			ErrorMessage: "Incorrect header input",
-		})
+	if err != nil {
+		log.Println(err)
 		return
 	}
 

@@ -33,8 +33,7 @@ func (u *updateTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	var in UpdateTokenIn
 
-	in.AccessToken = r.Header.Get("access_token")
-	in.RefreshToken = r.Header.Get("refresh_token")
+	err := json.NewDecoder(r.Body).Decode(&in)
 
 	if !validateIn(in) {
 		w.WriteHeader(http.StatusBadRequest)
@@ -45,7 +44,7 @@ func (u *updateTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := token_generator.ValidateToken(in.RefreshToken)
+	err = token_generator.ValidateToken(in.RefreshToken)
 
 	if err != nil && errors.Is(err, jwt.ErrTokenExpired) {
 		w.WriteHeader(http.StatusBadRequest)

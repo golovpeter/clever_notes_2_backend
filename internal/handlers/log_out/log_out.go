@@ -2,6 +2,7 @@ package log_out
 
 import (
 	"github.com/golovpeter/clever_notes_2/internal/common/make_error_response"
+	"github.com/golovpeter/clever_notes_2/internal/common/parse_auth_header"
 	"github.com/jmoiron/sqlx"
 	"log"
 	"net/http"
@@ -18,7 +19,6 @@ func NewLogOutHandler(db *sqlx.DB) *logOutHandler {
 func (l *logOutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		w.WriteHeader(http.StatusMethodNotAllowed)
 		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
 			ErrorCode:    "1",
 			ErrorMessage: "Unsupported method",
@@ -28,22 +28,16 @@ func (l *logOutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
 
-	var in LogOutIn
+	accessToken, err := parse_auth_header.ParseAuthHeader(w, r)
 
-	in.AccessToken = r.Header.Get("access_token")
-
-	if !validateIn(in) {
-		w.WriteHeader(http.StatusBadRequest)
-		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
-			ErrorCode:    "1",
-			ErrorMessage: "Incorrect header input",
-		})
+	if err != nil {
+		log.Println(err)
 		return
 	}
 
 	var tokenExist bool
-	err := l.Db.Get(&tokenExist, "select exists(select access_token from tokens where access_token = $1)",
-		in.AccessToken)
+	err = l.Db.Get(&tokenExist, "select exists(select access_token from tokens where access_token = $1)",
+		accessToken)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -60,7 +54,7 @@ func (l *logOutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = l.Db.Query("delete from tokens where access_token = $1", in.AccessToken)
+	_, err = l.Db.Query("delete from tokens where access_token = $1", accessToken)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -73,8 +67,4 @@ func (l *logOutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		ErrorMessage: "token successful deleted",
 	})
 
-}
-
-func validateIn(in LogOutIn) bool {
-	return in.AccessToken != ""
 }
