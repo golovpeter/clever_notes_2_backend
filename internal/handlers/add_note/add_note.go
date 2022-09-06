@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/golovpeter/clever_notes_2/internal/common/make_response"
+	"github.com/golovpeter/clever_notes_2/internal/common/make_error_response"
 	"github.com/golovpeter/clever_notes_2/internal/common/token_generator"
 	"github.com/jmoiron/sqlx"
 	"log"
@@ -22,9 +22,9 @@ func NewAddNoteHandler(db *sqlx.DB) *addNoteHandler {
 func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		make_response.MakeResponse(w, map[string]string{
-			"errorCode":    "1",
-			"errorMessage": "Unsupported method",
+		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
+			ErrorCode:    "1",
+			ErrorMessage: "Unsupported method",
 		})
 		return
 	}
@@ -35,18 +35,18 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		make_response.MakeResponse(w, map[string]string{
-			"errorCode":    "1",
-			"errorMessage": "Incorrect data input",
+		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
+			ErrorCode:    "1",
+			ErrorMessage: "Incorrect data input",
 		})
 		return
 	}
 
 	if !validateIn(in) {
 		w.WriteHeader(http.StatusBadRequest)
-		make_response.MakeResponse(w, map[string]string{
-			"errorCode":    "1",
-			"errorMessage": "Incorrect data input",
+		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
+			ErrorCode:    "1",
+			ErrorMessage: "Incorrect data input",
 		})
 		return
 	}
@@ -55,9 +55,9 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if accessToken == "" {
 		w.WriteHeader(http.StatusUnauthorized)
-		make_response.MakeResponse(w, map[string]string{
-			"errorCode":    "1",
-			"errorMessage": "Incorrect header input",
+		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
+			ErrorCode:    "1",
+			ErrorMessage: "Incorrect header input",
 		})
 		return
 	}
@@ -73,9 +73,9 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if !tokenExist {
 		w.WriteHeader(http.StatusUnauthorized)
-		make_response.MakeResponse(w, map[string]string{
-			"errorCode":    "1",
-			"errorMessage": "The user is not authorized!",
+		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
+			ErrorCode:    "1",
+			ErrorMessage: "The user is not authorized!",
 		})
 		return
 	}
@@ -84,9 +84,9 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil && errors.Is(err, jwt.ErrTokenExpired) {
 		w.WriteHeader(http.StatusUnauthorized)
-		make_response.MakeResponse(w, map[string]string{
-			"errorCode":    "1",
-			"errorMessage": "access token expired",
+		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
+			ErrorCode:    "1",
+			ErrorMessage: "access token expired",
 		})
 		return
 	}
@@ -123,7 +123,9 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	out, err := json.Marshal(map[string]int{"note_id": noteId})
+	response := AddNoteOut{NoteId: noteId}
+
+	out, err := json.Marshal(response)
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)

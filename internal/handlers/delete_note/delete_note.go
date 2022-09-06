@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/golovpeter/clever_notes_2/internal/common/make_response"
+	"github.com/golovpeter/clever_notes_2/internal/common/make_error_response"
 	"github.com/golovpeter/clever_notes_2/internal/common/token_generator"
 	"github.com/jmoiron/sqlx"
 	"log"
@@ -22,9 +22,9 @@ func NewDeleteNoteHandler(db *sqlx.DB) *deleteNoteHandler {
 func (d *deleteNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		make_response.MakeResponse(w, map[string]string{
-			"errorCode":    "1",
-			"errorMessage": "Unsupported method",
+		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
+			ErrorCode:    "1",
+			ErrorMessage: "Unsupported method",
 		})
 		return
 	}
@@ -35,18 +35,18 @@ func (d *deleteNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		make_response.MakeResponse(w, map[string]string{
-			"errorCode":    "1",
-			"errorMessage": "Incorrect data input",
+		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
+			ErrorCode:    "1",
+			ErrorMessage: "Incorrect data input",
 		})
 		return
 	}
 
 	if !validateIn(in) {
 		w.WriteHeader(http.StatusBadRequest)
-		make_response.MakeResponse(w, map[string]string{
-			"errorCode":    "1",
-			"errorMessage": "Incorrect data input",
+		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
+			ErrorCode:    "1",
+			ErrorMessage: "Incorrect data input",
 		})
 		return
 	}
@@ -55,9 +55,9 @@ func (d *deleteNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if accessToken == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		make_response.MakeResponse(w, map[string]string{
-			"errorCode":    "1",
-			"errorMessage": "Incorrect header input",
+		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
+			ErrorCode:    "1",
+			ErrorMessage: "Incorrect header input",
 		})
 		return
 	}
@@ -73,9 +73,9 @@ func (d *deleteNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if !tokenExist {
 		w.WriteHeader(http.StatusInternalServerError)
-		make_response.MakeResponse(w, map[string]string{
-			"errorCode":    "1",
-			"errorMessage": "There are no such tokens",
+		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
+			ErrorCode:    "1",
+			ErrorMessage: "There are no such tokens",
 		})
 		return
 	}
@@ -84,9 +84,9 @@ func (d *deleteNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil && errors.Is(err, jwt.ErrTokenExpired) {
 		w.WriteHeader(http.StatusUnauthorized)
-		make_response.MakeResponse(w, map[string]string{
-			"errorCode":    "1",
-			"errorMessage": "Access token expired",
+		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
+			ErrorCode:    "1",
+			ErrorMessage: "Access token expired",
 		})
 		return
 	}
@@ -111,18 +111,18 @@ func (d *deleteNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if noteUserId == 0 {
 		w.WriteHeader(http.StatusBadRequest)
-		make_response.MakeResponse(w, map[string]string{
-			"errorCode":    "1",
-			"errorMessage": "There is no such note",
+		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
+			ErrorCode:    "1",
+			ErrorMessage: "There is no such note",
 		})
 		return
 	}
 
 	if noteUserId != userId {
 		w.WriteHeader(http.StatusBadRequest)
-		make_response.MakeResponse(w, map[string]string{
-			"errorCode":    "1",
-			"errorMessage": "This note belongs to another user",
+		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
+			ErrorCode:    "1",
+			ErrorMessage: "This note belongs to another user",
 		})
 		return
 	}
@@ -135,9 +135,9 @@ func (d *deleteNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	make_response.MakeResponse(w, map[string]string{
-		"errorCode":    "0",
-		"errorMessage": "note successful deleted",
+	make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
+		ErrorCode:    "0",
+		ErrorMessage: "note successful deleted",
 	})
 }
 

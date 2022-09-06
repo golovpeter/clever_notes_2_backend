@@ -3,7 +3,7 @@ package sign_up
 import (
 	"encoding/json"
 	"github.com/golovpeter/clever_notes_2/internal/common/hasher"
-	"github.com/golovpeter/clever_notes_2/internal/common/make_response"
+	"github.com/golovpeter/clever_notes_2/internal/common/make_error_response"
 	"github.com/jmoiron/sqlx"
 	"log"
 	"net/http"
@@ -20,9 +20,9 @@ func NewSignUpHandler(db *sqlx.DB) *signUpHandler {
 func (s *signUpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		make_response.MakeResponse(w, map[string]string{
-			"errorCode":    "1",
-			"errorMessage": "Unsupported method",
+		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
+			ErrorCode:    "1",
+			ErrorMessage: "Unsupported method",
 		})
 		return
 	}
@@ -35,18 +35,18 @@ func (s *signUpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		make_response.MakeResponse(w, map[string]string{
-			"errorCode":    "1",
-			"errorMessage": "Incorrect data input",
+		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
+			ErrorCode:    "1",
+			ErrorMessage: "Incorrect data input",
 		})
 		return
 	}
 
 	if !validateIn(in) {
 		w.WriteHeader(http.StatusBadRequest)
-		make_response.MakeResponse(w, map[string]string{
-			"errorCode":    "1",
-			"errorMessage": "Incorrect data input",
+		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
+			ErrorCode:    "1",
+			ErrorMessage: "Incorrect data input",
 		})
 		return
 	}
@@ -62,9 +62,9 @@ func (s *signUpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if elementExist {
 		w.WriteHeader(http.StatusBadRequest)
-		make_response.MakeResponse(w, map[string]string{
-			"errorCode":    "1",
-			"errorMessage": "User already registered!",
+		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
+			ErrorCode:    "1",
+			ErrorMessage: "User already registered!",
 		})
 		return
 	}
@@ -78,9 +78,9 @@ func (s *signUpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	make_response.MakeResponse(w, map[string]string{
-		"errorCode": "0",
-		"message":   "Registration was successful!",
+	make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
+		ErrorCode:    "0",
+		ErrorMessage: "Registration was successful!",
 	})
 
 	return

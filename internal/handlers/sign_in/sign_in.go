@@ -3,7 +3,7 @@ package sign_in
 import (
 	"encoding/json"
 	"github.com/golovpeter/clever_notes_2/internal/common/hasher"
-	"github.com/golovpeter/clever_notes_2/internal/common/make_response"
+	"github.com/golovpeter/clever_notes_2/internal/common/make_error_response"
 	"github.com/golovpeter/clever_notes_2/internal/common/token_generator"
 	"github.com/jmoiron/sqlx"
 	"log"
@@ -21,9 +21,9 @@ func NewSignInHandler(db *sqlx.DB) *signInHandler {
 func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		make_response.MakeResponse(w, map[string]string{
-			"errorCode":    "1",
-			"errorMessage": "Unsupported method",
+		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
+			ErrorCode:    "1",
+			ErrorMessage: "Unsupported method",
 		})
 		return
 	}
@@ -36,18 +36,18 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		make_response.MakeResponse(w, map[string]string{
-			"errorCode":    "1",
-			"errorMessage": "Incorrect data input",
+		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
+			ErrorCode:    "1",
+			ErrorMessage: "Incorrect data input",
 		})
 		return
 	}
 
 	if !validateIn(in) {
 		w.WriteHeader(http.StatusBadRequest)
-		make_response.MakeResponse(w, map[string]string{
-			"errorCode":    "1",
-			"errorMessage": "Incorrect data input",
+		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
+			ErrorCode:    "1",
+			ErrorMessage: "Incorrect data input",
 		})
 		return
 	}
@@ -63,9 +63,9 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if !elementExist {
 		w.WriteHeader(http.StatusBadRequest)
-		make_response.MakeResponse(w, map[string]string{
-			"errorCode":    "1",
-			"errorMessage": "The user is not registered!",
+		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
+			ErrorCode:    "1",
+			ErrorMessage: "The user is not registered!",
 		})
 		return
 	}
@@ -75,9 +75,9 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if in.Username != userData.Username || hasher.GeneratePasswordHash(in.Password) != userData.Password {
 		w.WriteHeader(http.StatusInternalServerError) // w.WriteHeader(http.StatusUnauthorized)
-		make_response.MakeResponse(w, map[string]string{
-			"errorCode":    "1",
-			"errorMessage": "Incorrect password!",
+		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
+			ErrorCode:    "1",
+			ErrorMessage: "Incorrect password!",
 		})
 		return
 	}
@@ -128,10 +128,25 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	make_response.MakeResponse(w, map[string]string{
-		"access_token":  accessToken,
-		"refresh_token": refreshToken,
-	})
+	response := SignInOut{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}
+
+	out, err := json.Marshal(response)
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Fatalln(err)
+		return
+	}
+
+	wrote, err := w.Write(out)
+
+	if err != nil || wrote != len(out) {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }
 
 func validateIn(in SignIn) bool {

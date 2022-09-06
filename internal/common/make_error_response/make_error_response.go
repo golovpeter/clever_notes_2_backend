@@ -1,4 +1,4 @@
-package make_response
+package make_error_response
 
 import (
 	"encoding/json"
@@ -6,7 +6,12 @@ import (
 	"net/http"
 )
 
-func MakeResponse(w http.ResponseWriter, els map[string]string) {
+type ErrorMessage struct {
+	ErrorCode    string `json:"errorCode"`
+	ErrorMessage string `json:"errorMessage"`
+}
+
+func MakeErrorResponse(w http.ResponseWriter, els ErrorMessage) {
 
 	out, err := json.Marshal(els)
 
