@@ -17,6 +17,7 @@ type getAllNotesHandel struct {
 }
 
 type Note struct {
+	NoteId  string `json:"note_id"`
 	Caption string `json:"note_caption"`
 	Text    string `json:"note"`
 }
@@ -88,7 +89,7 @@ func (g *getAllNotesHandel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	notes := make([]Note, 0)
 
-	rows, err := g.db.Query("select note_caption, note from notes where user_id = $1", userId)
+	rows, err := g.db.Query("select note_id, note_caption, note from notes where user_id = $1", userId)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -97,10 +98,11 @@ func (g *getAllNotesHandel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for rows.Next() {
-		var noteCaption, note string
-		_ = rows.Scan(&noteCaption, &note)
+		var noteId, noteCaption, note string
+		_ = rows.Scan(&noteId, &noteCaption, &note)
 
 		el := Note{
+			NoteId:  noteId,
 			Caption: noteCaption,
 			Text:    note,
 		}

@@ -36,15 +36,7 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
-			ErrorCode:    "1",
-			ErrorMessage: "Incorrect data input",
-		})
-		return
-	}
-
-	if !validateIn(in) {
-		w.WriteHeader(http.StatusBadRequest)
+		log.Println(err)
 		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
 			ErrorCode:    "1",
 			ErrorMessage: "Incorrect data input",
@@ -137,8 +129,4 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-}
-
-func validateIn(in AddNoteIn) bool {
-	return in.Note != ""
 }
