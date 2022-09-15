@@ -154,5 +154,5 @@ func (u *updateNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func validateIn(in UpdateNoteIn) bool {
-	return in.NewNote != "" && in.NoteId != 0 && in.NewNoteCaption != ""
+	return in.NoteId != 0
 }
