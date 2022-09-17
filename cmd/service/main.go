@@ -27,6 +27,8 @@ func main() {
 		os.Getenv("POSTGRES_DB_NAME"))
 
 	db, err := sqlx.Connect("pgx", url)
+	//db.SetMaxOpenConns(10)
+	db.SetMaxIdleConns(5)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -45,6 +47,8 @@ func main() {
 
 	mux.Handle("/get-all-notes", enable_cors.CORS(get_all_notes.NewGetAllNotesHandler(db)))
 	mux.Handle("/update-token", enable_cors.CORS(update_token.NewUpdateTokenHandler(db)))
+
+	mux.Handle("/", http.FileServer(http.Dir("./static")))
 
 	log.Fatal(http.ListenAndServe(os.Getenv("PORT"), mux))
 
