@@ -33,7 +33,8 @@ func main() {
 
 	db.SetMaxOpenConns(10)
 	db.SetMaxIdleConns(5)
-	db.SetConnMaxLifetime(1 * time.Second)
+	db.SetConnMaxLifetime(5 * time.Minute)
+	db.SetConnMaxIdleTime(5 * time.Minute)
 
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
