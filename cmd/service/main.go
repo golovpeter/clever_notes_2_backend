@@ -53,7 +53,7 @@ func main() {
 	// Serve static content
 	mux.Handle("/", enable_cors.CORS(servestatic.NewServeStaticHandler("./static")))
 
-	log.Fatal(http.ListenAndServe(os.Getenv("PORT"), mux))
+	log.Fatal(http.ListenAndServe(":"+os.Getenv("PORT"), mux))
 
 	defer db.Close()
 }
