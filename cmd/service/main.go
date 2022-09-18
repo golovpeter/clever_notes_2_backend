@@ -11,6 +11,7 @@ import (
 	"github.com/golovpeter/clever_notes_2/internal/handlers/delete_note"
 	"github.com/golovpeter/clever_notes_2/internal/handlers/get_all_notes"
 	"github.com/golovpeter/clever_notes_2/internal/handlers/log_out"
+	servestatic "github.com/golovpeter/clever_notes_2/internal/handlers/serve_static"
 	"github.com/golovpeter/clever_notes_2/internal/handlers/sign_in"
 	"github.com/golovpeter/clever_notes_2/internal/handlers/sign_up"
 	"github.com/golovpeter/clever_notes_2/internal/handlers/update_note"
@@ -50,9 +51,7 @@ func main() {
 	mux.Handle("/update-token", enable_cors.CORS(update_token.NewUpdateTokenHandler(db)))
 
 	// Serve static content
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./static/index.html")
-	})
+	mux.Handle("/", enable_cors.CORS(servestatic.NewServeStaticHandler("./static")))
 
 	log.Fatal(http.ListenAndServe(os.Getenv("PORT"), mux))
 
