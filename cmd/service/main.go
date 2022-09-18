@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/golovpeter/clever_notes_2/internal/common/enable_cors"
 	"github.com/golovpeter/clever_notes_2/internal/handlers/add_note"
@@ -15,16 +18,42 @@ import (
 	"github.com/golovpeter/clever_notes_2/internal/handlers/sign_up"
 	"github.com/golovpeter/clever_notes_2/internal/handlers/update_note"
 	"github.com/golovpeter/clever_notes_2/internal/handlers/update_token"
-	_ "github.com/jackc/pgx/v4/stdlib"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 )
 
 func main() {
 	db, err := sqlx.Connect("pgx", os.Getenv("DATABASE_URL"))
-	db.SetMaxOpenConns(10)
+
 	if err != nil {
 		log.Fatalln(err)
 	}
+
+	defer db.Close()
+
+	db.SetMaxOpenConns(10)
+	db.SetMaxIdleConns(5)
+	db.SetConnMaxLifetime(5 * time.Minute)
+	db.SetConnMaxIdleTime(5 * time.Minute)
+
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				fmt.Println(db.Stats())
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
+	db.Stats()
 
 	mux := http.NewServeMux()
 
@@ -45,6 +74,4 @@ func main() {
 	mux.Handle("/", enable_cors.CORS(servestatic.NewServeStaticHandler("./static")))
 
 	log.Fatal(http.ListenAndServe(":"+os.Getenv("PORT"), mux))
-
-	defer db.Close()
 }
