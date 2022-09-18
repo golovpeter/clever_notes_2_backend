@@ -18,7 +18,7 @@ import (
 	"github.com/golovpeter/clever_notes_2/internal/handlers/sign_up"
 	"github.com/golovpeter/clever_notes_2/internal/handlers/update_note"
 	"github.com/golovpeter/clever_notes_2/internal/handlers/update_token"
-	_ "github.com/jackc/pgx/v4/stdlib"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 )
 
