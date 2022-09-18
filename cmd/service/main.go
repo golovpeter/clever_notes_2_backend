@@ -21,6 +21,7 @@ import (
 
 func main() {
 	db, err := sqlx.Connect("pgx", os.Getenv("DATABASE_URL"))
+	db.SetMaxOpenConns(10)
 	if err != nil {
 		log.Fatalln(err)
 	}
