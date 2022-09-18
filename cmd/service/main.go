@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -21,16 +20,7 @@ import (
 )
 
 func main() {
-	url := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
-		os.Getenv("POSTGRES_USER"),
-		os.Getenv("POSTGRES_PASSWORD"),
-		os.Getenv("POSTGRES_HOST"),
-		os.Getenv("POSTGRES_PORT"),
-		os.Getenv("POSTGRES_DB_NAME"))
-
-	db, err := sqlx.Connect("pgx", url)
-	//db.SetMaxOpenConns(10)
-	db.SetMaxIdleConns(5)
+	db, err := sqlx.Connect("pgx", os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatalln(err)
 	}
