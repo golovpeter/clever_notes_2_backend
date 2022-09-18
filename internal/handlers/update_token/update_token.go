@@ -61,8 +61,8 @@ func (u *updateTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var tokenExist bool
-	err = u.db.Get(&tokenExist,
+	tokenExist := []bool{false}
+	err = u.db.Select(&tokenExist,
 		"select exists(select access_token, refresh_token from tokens where access_token = $1 and  refresh_token = $2)",
 		in.AccessToken,
 		in.RefreshToken)
@@ -73,7 +73,7 @@ func (u *updateTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !tokenExist {
+	if !tokenExist[0] {
 		w.WriteHeader(http.StatusBadRequest)
 		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
 			ErrorCode:    "1",
@@ -82,8 +82,8 @@ func (u *updateTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var username string
-	err = u.db.Get(&username,
+	var username []string
+	err = u.db.Select(&username,
 		"select username from users inner join tokens n on users.user_id = n.user_id where refresh_token = $1", in.RefreshToken)
 
 	if err != nil {
@@ -92,7 +92,7 @@ func (u *updateTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newAccessToken, err := token_generator.GenerateJWT(username)
+	newAccessToken, err := token_generator.GenerateJWT(username[0])
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -108,7 +108,7 @@ func (u *updateTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = u.db.Query("update tokens set access_token = $1, refresh_token = $2 where refresh_token = $3",
+	_, err = u.db.Exec("update tokens set access_token = $1, refresh_token = $2 where refresh_token = $3",
 		newAccessToken,
 		newRefreshToken,
 		in.RefreshToken)

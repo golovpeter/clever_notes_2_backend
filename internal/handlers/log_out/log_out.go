@@ -35,8 +35,8 @@ func (l *logOutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var tokenExist bool
-	err = l.Db.Get(&tokenExist, "select exists(select access_token from tokens where access_token = $1)",
+	tokenExist := []bool{false}
+	err = l.Db.Select(&tokenExist, "select exists(select access_token from tokens where access_token = $1)",
 		accessToken)
 
 	if err != nil {
@@ -45,7 +45,7 @@ func (l *logOutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !tokenExist {
+	if !tokenExist[0] {
 		w.WriteHeader(http.StatusInternalServerError)
 		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
 			ErrorCode:    "1",
@@ -54,7 +54,7 @@ func (l *logOutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = l.Db.Query("delete from tokens where access_token = $1", accessToken)
+	_, err = l.Db.Exec("delete from tokens where access_token = $1", accessToken)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

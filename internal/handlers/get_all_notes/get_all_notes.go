@@ -17,9 +17,9 @@ type getAllNotesHandel struct {
 }
 
 type Note struct {
-	NoteId  string `json:"note_id"`
-	Caption string `json:"note_caption"`
-	Text    string `json:"note"`
+	NoteId  string `json:"note_id" db:"note_id"`
+	Caption string `json:"note_caption" db:"note_caption"`
+	Text    string `json:"note" db:"note"`
 }
 
 func NewGetAllNotesHandler(db *sqlx.DB) *getAllNotesHandel {
@@ -43,8 +43,8 @@ func (g *getAllNotesHandel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var tokenExist bool
-	err = g.db.Get(&tokenExist, "select exists(select access_token from tokens where access_token = $1)", accessToken)
+	tokenExist := []bool{false}
+	err = g.db.Select(&tokenExist, "select exists(select access_token from tokens where access_token = $1)", accessToken)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -52,7 +52,7 @@ func (g *getAllNotesHandel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !tokenExist {
+	if !tokenExist[0] {
 		w.WriteHeader(http.StatusUnauthorized)
 		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
 			ErrorCode:    "1",
@@ -78,8 +78,8 @@ func (g *getAllNotesHandel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var userId int
-	err = g.db.Get(&userId, "select user_id from tokens where access_token = $1", accessToken)
+	userId := []int{0}
+	err = g.db.Select(&userId, "select user_id from tokens where access_token = $1", accessToken)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -89,25 +89,12 @@ func (g *getAllNotesHandel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	notes := make([]Note, 0)
 
-	rows, err := g.db.Query("select note_id, note_caption, note from notes where user_id = $1", userId)
+	err = g.db.Select(&notes, "select note_id, note_caption, note from notes where user_id = $1", userId[0])
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Println(err)
 		return
-	}
-
-	for rows.Next() {
-		var noteId, noteCaption, note string
-		_ = rows.Scan(&noteId, &noteCaption, &note)
-
-		el := Note{
-			NoteId:  noteId,
-			Caption: noteCaption,
-			Text:    note,
-		}
-
-		notes = append(notes, el)
 	}
 
 	out, err := json.Marshal(GetAllNotesOut{

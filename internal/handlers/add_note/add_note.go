@@ -51,8 +51,8 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var tokenExist bool
-	err = a.db.Get(&tokenExist, "select exists(select access_token from tokens where access_token = $1)", accessToken)
+	tokenExist := []bool{false}
+	err = a.db.Select(&tokenExist, "select exists(select access_token from tokens where access_token = $1)", accessToken)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -60,7 +60,7 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !tokenExist {
+	if !tokenExist[0] {
 		w.WriteHeader(http.StatusUnauthorized)
 		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
 			ErrorCode:    "1",
@@ -86,8 +86,8 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var userId int
-	err = a.db.Get(&userId, "select user_id from tokens where access_token = $1", accessToken)
+	userId := []int{0}
+	err = a.db.Select(&userId, "select user_id from tokens where access_token = $1", accessToken)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -95,7 +95,7 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = a.db.Query("insert into notes(user_id, note_caption, note) values ($1, $2, $3)", userId, in.NoteCaption, in.Note)
+	_, err = a.db.Exec("insert into notes(user_id, note_caption, note) values ($1, $2, $3)", userId[0], in.NoteCaption, in.Note)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -103,8 +103,8 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var noteId int
-	err = a.db.Get(&noteId, "select max(note_id) from notes")
+	noteId := []int{0}
+	err = a.db.Select(&noteId, "select max(note_id) from notes")
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -112,7 +112,7 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := AddNoteOut{NoteId: noteId}
+	response := AddNoteOut{NoteId: noteId[0]}
 
 	out, err := json.Marshal(response)
 
