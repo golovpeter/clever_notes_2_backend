@@ -4,9 +4,5 @@
 | Name | Description |
 | --- | --- |
 | PORT |
-| POSTGRES_DB_NAME |  | 
-| POSTGRES_HOST |
-| POSTGRES_PASSWORD |
-| POSTGRES_PORT |
-| POSTGRES_USER |
+| DATABASE_URL| Url to connect to the database |
 | SIGNINKEY | Key for creating a jwt token | 
