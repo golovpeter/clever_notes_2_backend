@@ -43,8 +43,8 @@ func (g *getAllNotesHandel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenExist := []bool{false}
-	err = g.db.Select(&tokenExist, "select exists(select access_token from tokens where access_token = $1)", accessToken)
+	tokenExist := false
+	err = g.db.Get(&tokenExist, "select exists(select access_token from tokens where access_token = $1)", accessToken)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -52,7 +52,7 @@ func (g *getAllNotesHandel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !tokenExist[0] {
+	if !tokenExist {
 		w.WriteHeader(http.StatusUnauthorized)
 		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
 			ErrorCode:    "1",
@@ -78,8 +78,8 @@ func (g *getAllNotesHandel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userId := []int{0}
-	err = g.db.Select(&userId, "select user_id from tokens where access_token = $1", accessToken)
+	var userId int
+	err = g.db.Get(&userId, "select user_id from tokens where access_token = $1", accessToken)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -87,9 +87,18 @@ func (g *getAllNotesHandel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if userId == 0 {
+		w.WriteHeader(http.StatusInternalServerError)
+		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
+			ErrorCode:    "1",
+			ErrorMessage: "there are no such user",
+		})
+		return
+	}
+
 	notes := make([]Note, 0)
 
-	err = g.db.Select(&notes, "select note_id, note_caption, note from notes where user_id = $1", userId[0])
+	err = g.db.Select(&notes, "select note_id, note_caption, note from notes where user_id = $1", userId)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

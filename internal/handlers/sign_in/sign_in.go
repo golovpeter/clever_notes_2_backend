@@ -52,8 +52,8 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	elementExist := []bool{false}
-	err = s.Db.Select(&elementExist, "select exists(select username from users where username = $1)", in.Username)
+	elementExist := false
+	err = s.Db.Get(&elementExist, "select exists(select username from users where username = $1)", in.Username)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -61,7 +61,7 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !elementExist[0] {
+	if !elementExist {
 		w.WriteHeader(http.StatusBadRequest)
 		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
 			ErrorCode:    "1",
@@ -70,10 +70,10 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var userData []User
-	err = s.Db.Select(&userData, "select user_id, username, password from users where  username = $1", in.Username)
+	var userData User
+	err = s.Db.Get(&userData, "select user_id, username, password from users where  username = $1", in.Username)
 
-	if in.Username != userData[0].Username || hasher.GeneratePasswordHash(in.Password) != userData[0].Password {
+	if in.Username != userData.Username || hasher.GeneratePasswordHash(in.Password) != userData.Password {
 		w.WriteHeader(http.StatusInternalServerError)
 		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
 			ErrorCode:    "1",
@@ -82,8 +82,8 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokensExist := []bool{false}
-	err = s.Db.Select(&tokensExist, "select exists(select user_id from tokens where user_id = $1)", userData[0].User_id)
+	tokensExist := false
+	err = s.Db.Get(&tokensExist, "select exists(select user_id from tokens where user_id = $1)", userData.User_id)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -91,8 +91,8 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if tokensExist[0] {
-		_, err = s.Db.Query("delete from tokens where user_id = $1", userData[0].User_id)
+	if tokensExist {
+		_, err = s.Db.Exec("delete from tokens where user_id = $1", userData.User_id)
 
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -101,7 +101,7 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	_, err = s.Db.Exec("delete from tokens where user_id = $1", userData[0].User_id)
+	_, err = s.Db.Exec("delete from tokens where user_id = $1", userData.User_id)
 
 	accessToken, err := token_generator.GenerateJWT(in.Username)
 
@@ -120,7 +120,7 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err = s.Db.Exec("insert into tokens values ((select user_id from users where users.user_id = $1), $2, $3)",
-		userData[0].User_id,
+		userData.User_id,
 		accessToken,
 		refreshToken)
 

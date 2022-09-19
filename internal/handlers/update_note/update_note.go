@@ -62,8 +62,8 @@ func (u *updateNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenExist := []bool{false}
-	err = u.db.Select(&tokenExist, "select exists(select access_token from tokens where access_token = $1)", accessToken)
+	tokenExist := false
+	err = u.db.Get(&tokenExist, "select exists(select access_token from tokens where access_token = $1)", accessToken)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -71,7 +71,7 @@ func (u *updateNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !tokenExist[0] {
+	if !tokenExist {
 		w.WriteHeader(http.StatusInternalServerError)
 		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
 			ErrorCode:    "1",
@@ -97,12 +97,21 @@ func (u *updateNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userId := []int{0}
-	err = u.db.Select(&userId, "select user_id from tokens where access_token = $1", accessToken)
+	var userId int
+	err = u.db.Get(&userId, "select user_id from tokens where access_token = $1", accessToken)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Println(err)
+		return
+	}
+
+	if userId == 0 {
+		w.WriteHeader(http.StatusInternalServerError)
+		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
+			ErrorCode:    "1",
+			ErrorMessage: "there are no such user",
+		})
 		return
 	}
 
@@ -112,10 +121,10 @@ func (u *updateNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		in.NoteId,
 		userId)
 
-	noteUserId := []int{0}
-	err = u.db.Select(&noteUserId, "select user_id from notes where note_id = $1", in.NoteId)
+	var noteUserId int
+	err = u.db.Get(&noteUserId, "select user_id from notes where note_id = $1", in.NoteId)
 
-	if noteUserId[0] == 0 {
+	if noteUserId == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
 			ErrorCode:    "1",
@@ -130,7 +139,7 @@ func (u *updateNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if noteUserId[0] != userId[0] {
+	if noteUserId != userId {
 		w.WriteHeader(http.StatusBadRequest)
 		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
 			ErrorCode:    "1",

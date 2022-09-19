@@ -61,8 +61,8 @@ func (u *updateTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenExist := []bool{false}
-	err = u.db.Select(&tokenExist,
+	tokenExist := false
+	err = u.db.Get(&tokenExist,
 		"select exists(select access_token, refresh_token from tokens where access_token = $1 and  refresh_token = $2)",
 		in.AccessToken,
 		in.RefreshToken)
@@ -73,17 +73,17 @@ func (u *updateTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !tokenExist[0] {
+	if !tokenExist {
 		w.WriteHeader(http.StatusBadRequest)
 		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
 			ErrorCode:    "1",
-			ErrorMessage: "there are no suck tokens",
+			ErrorMessage: "there are no such tokens",
 		})
 		return
 	}
 
-	var username []string
-	err = u.db.Select(&username,
+	var username string
+	err = u.db.Get(&username,
 		"select username from users inner join tokens n on users.user_id = n.user_id where refresh_token = $1", in.RefreshToken)
 
 	if err != nil {
@@ -92,7 +92,16 @@ func (u *updateTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newAccessToken, err := token_generator.GenerateJWT(username[0])
+	if username == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
+			ErrorCode:    "1",
+			ErrorMessage: "there are no such username",
+		})
+		return
+	}
+
+	newAccessToken, err := token_generator.GenerateJWT(username)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

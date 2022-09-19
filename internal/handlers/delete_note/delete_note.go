@@ -60,8 +60,8 @@ func (d *deleteNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenExist := []bool{false}
-	err = d.db.Select(&tokenExist, "select exists(select access_token from tokens where access_token = $1)", accessToken)
+	tokenExist := false
+	err = d.db.Get(&tokenExist, "select exists(select access_token from tokens where access_token = $1)", accessToken)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -69,7 +69,7 @@ func (d *deleteNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !tokenExist[0] {
+	if !tokenExist {
 		w.WriteHeader(http.StatusInternalServerError)
 		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
 			ErrorCode:    "1",
@@ -95,8 +95,8 @@ func (d *deleteNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userId := []int{0}
-	err = d.db.Select(&userId, "select user_id from tokens where access_token = $1", accessToken)
+	var userId int
+	err = d.db.Get(&userId, "select user_id from tokens where access_token = $1", accessToken)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -104,20 +104,28 @@ func (d *deleteNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	noteUserId := []int{0}
-
-	err = d.db.Select(&noteUserId, "select user_id from notes where note_id = $1", in.NoteId)
-
-	if noteUserId[0] == 0 {
+	if userId == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
 			ErrorCode:    "1",
-			ErrorMessage: "There is no such note",
+			ErrorMessage: "there is no such user",
 		})
 		return
 	}
 
-	if noteUserId[0] != userId[0] {
+	var noteUserId int
+	err = d.db.Get(&noteUserId, "select user_id from notes where note_id = $1", in.NoteId)
+
+	if noteUserId == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
+			ErrorCode:    "1",
+			ErrorMessage: "there is no such note",
+		})
+		return
+	}
+
+	if noteUserId != userId {
 		w.WriteHeader(http.StatusBadRequest)
 		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
 			ErrorCode:    "1",

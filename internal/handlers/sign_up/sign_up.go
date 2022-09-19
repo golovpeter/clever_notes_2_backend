@@ -52,8 +52,8 @@ func (s *signUpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	elementExist := []bool{false}
-	err = s.Db.Select(&elementExist, "select exists(select username from users where username = $1)", in.Username)
+	elementExist := false
+	err = s.Db.Get(&elementExist, "select exists(select username from users where username = $1)", in.Username)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -61,7 +61,7 @@ func (s *signUpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if elementExist[0] {
+	if elementExist {
 		w.WriteHeader(http.StatusBadRequest)
 		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
 			ErrorCode:    "1",

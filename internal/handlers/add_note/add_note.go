@@ -51,8 +51,8 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenExist := []bool{false}
-	err = a.db.Select(&tokenExist, "select exists(select access_token from tokens where access_token = $1)", accessToken)
+	tokenExist := false
+	err = a.db.Get(&tokenExist, "select exists(select access_token from tokens where access_token = $1)", accessToken)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -60,7 +60,7 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !tokenExist[0] {
+	if !tokenExist {
 		w.WriteHeader(http.StatusUnauthorized)
 		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
 			ErrorCode:    "1",
@@ -86,8 +86,8 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userId := []int{0}
-	err = a.db.Select(&userId, "select user_id from tokens where access_token = $1", accessToken)
+	var userId int
+	err = a.db.Get(&userId, "select user_id from tokens where access_token = $1", accessToken)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -95,7 +95,16 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = a.db.Exec("insert into notes(user_id, note_caption, note) values ($1, $2, $3)", userId[0], in.NoteCaption, in.Note)
+	if userId == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		make_error_response.MakeErrorResponse(w, make_error_response.ErrorMessage{
+			ErrorCode:    "1",
+			ErrorMessage: "there is no such user",
+		})
+		return
+	}
+
+	_, err = a.db.Exec("insert into notes(user_id, note_caption, note) values ($1, $2, $3)", userId, in.NoteCaption, in.Note)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -103,8 +112,8 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	noteId := []int{0}
-	err = a.db.Select(&noteId, "select max(note_id) from notes")
+	var noteId int
+	err = a.db.Get(&noteId, "select max(note_id) from notes")
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -112,7 +121,7 @@ func (a *addNoteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := AddNoteOut{NoteId: noteId[0]}
+	response := AddNoteOut{NoteId: noteId}
 
 	out, err := json.Marshal(response)
 
