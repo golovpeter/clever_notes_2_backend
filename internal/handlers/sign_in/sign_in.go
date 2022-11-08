@@ -5,16 +5,25 @@ import (
 	"github.com/golovpeter/clever_notes_2/internal/common/hasher"
 	"github.com/golovpeter/clever_notes_2/internal/common/make_error_response"
 	"github.com/golovpeter/clever_notes_2/internal/common/token_generator"
-	"github.com/jmoiron/sqlx"
 	"log"
 	"net/http"
 )
 
-type signInHandler struct {
-	Db *sqlx.DB
+var generateJWT = func(username string) (string, error) {
+	jwt, err := token_generator.GenerateJWT(username)
+	return jwt, err
 }
 
-func NewSignInHandler(db *sqlx.DB) *signInHandler {
+var generateRefreshJWT = func() (string, error) {
+	jwt, err := token_generator.GenerateRefreshJWT()
+	return jwt, err
+}
+
+type signInHandler struct {
+	Db Database
+}
+
+func NewSignInHandler(db Database) *signInHandler {
 	return &signInHandler{Db: db}
 }
 
@@ -101,23 +110,8 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	_, err = s.Db.Exec("delete from tokens where user_id = $1", userData.User_id)
-
-	accessToken, err := token_generator.GenerateJWT(in.Username)
-
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(err)
-		return
-	}
-
-	refreshToken, err := token_generator.GenerateRefreshJWT()
-
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Println(err)
-		return
-	}
+	accessToken, _ := generateJWT(in.Username)
+	refreshToken, _ := generateRefreshJWT()
 
 	_, err = s.Db.Exec("insert into tokens values ((select user_id from users where users.user_id = $1), $2, $3)",
 		userData.User_id,
@@ -136,12 +130,6 @@ func (s *signInHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	out, err := json.Marshal(response)
-
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		log.Fatalln(err)
-		return
-	}
 
 	wrote, err := w.Write(out)
 
