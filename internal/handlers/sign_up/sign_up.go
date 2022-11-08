@@ -2,18 +2,18 @@ package sign_up
 
 import (
 	"encoding/json"
-	"github.com/golovpeter/clever_notes_2/internal/common/hasher"
-	"github.com/golovpeter/clever_notes_2/internal/common/make_error_response"
-	"github.com/jmoiron/sqlx"
 	"log"
 	"net/http"
+
+	"github.com/golovpeter/clever_notes_2/internal/common/hasher"
+	"github.com/golovpeter/clever_notes_2/internal/common/make_error_response"
 )
 
 type signUpHandler struct {
-	Db *sqlx.DB
+	Db Database
 }
 
-func NewSignUpHandler(db *sqlx.DB) *signUpHandler {
+func NewSignUpHandler(db Database) *signUpHandler {
 	return &signUpHandler{Db: db}
 }
 
@@ -56,6 +56,7 @@ func (s *signUpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err = s.Db.Get(&elementExist, "select exists(select username from users where username = $1)", in.Username)
 
 	if err != nil {
+		log.Print(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Println(err)
 		return
@@ -74,6 +75,7 @@ func (s *signUpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		in.Username, hasher.GeneratePasswordHash(in.Password))
 
 	if err != nil {
+		log.Print(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Println(err)
 		return
