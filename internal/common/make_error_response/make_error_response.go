@@ -2,7 +2,6 @@ package make_error_response
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 )
 
@@ -12,14 +11,7 @@ type ErrorMessage struct {
 }
 
 func MakeErrorResponse(w http.ResponseWriter, els ErrorMessage) {
-
-	out, err := json.Marshal(els)
-
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		log.Fatalln(err)
-		return
-	}
+	out, _ := json.Marshal(els)
 
 	wrote, err := w.Write(out)
 
