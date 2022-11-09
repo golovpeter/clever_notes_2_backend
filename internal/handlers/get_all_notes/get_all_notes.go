@@ -7,22 +7,25 @@ import (
 	"github.com/golovpeter/clever_notes_2/internal/common/make_error_response"
 	"github.com/golovpeter/clever_notes_2/internal/common/parse_auth_header"
 	"github.com/golovpeter/clever_notes_2/internal/common/token_generator"
-	"github.com/jmoiron/sqlx"
 	"log"
 	"net/http"
 )
 
+var parseAuthHeader = func(w http.ResponseWriter, r *http.Request) (string, error) {
+	accessToken, err := parse_auth_header.ParseAuthHeader(w, r)
+	return accessToken, err
+}
+
+var validateToken = func(accessToken string) error {
+	err := token_generator.ValidateToken(accessToken)
+	return err
+}
+
 type getAllNotesHandel struct {
-	db *sqlx.DB
+	db Database
 }
 
-type Note struct {
-	NoteId  string `json:"note_id" db:"note_id"`
-	Caption string `json:"note_caption" db:"note_caption"`
-	Text    string `json:"note" db:"note"`
-}
-
-func NewGetAllNotesHandler(db *sqlx.DB) *getAllNotesHandel {
+func NewGetAllNotesHandler(db Database) *getAllNotesHandel {
 	return &getAllNotesHandel{db: db}
 }
 
@@ -36,7 +39,7 @@ func (g *getAllNotesHandel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, err := parse_auth_header.ParseAuthHeader(w, r)
+	accessToken, err := parseAuthHeader(w, r)
 
 	if err != nil {
 		log.Println(err)
@@ -61,7 +64,7 @@ func (g *getAllNotesHandel) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = token_generator.ValidateToken(accessToken)
+	err = validateToken(accessToken)
 
 	if err != nil && errors.Is(err, jwt.ErrTokenExpired) {
 		w.WriteHeader(http.StatusUnauthorized)
