@@ -69,14 +69,6 @@ func (s *Suite) Test_ServerHTTP_Success() {
 		},
 	)
 
-	s.databaseMock.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Times(1).DoAndReturn(
-		func(dest interface{}, query string, args ...interface{}) error {
-			destInt := dest.(*int)
-			*destInt = 10
-			return nil
-		},
-	)
-
 	s.databaseMock.EXPECT().Select(gomock.Any(), gomock.Any(), 10).Return(nil)
 
 	notes := make([]Note, 0)
